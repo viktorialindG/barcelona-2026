@@ -1107,6 +1107,94 @@
   .todo-due.soon { color: #9c6a0c; background: #fbe9cf; }
   .todo-due.overdue { color: #a83a22; background: #fadbd5; }
   .todo-due.unset { color: var(--muted); background: transparent; font-weight: 500; opacity: 0.6; }
+
+  /* Assignee badge */
+  .todo-assignee-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+  .todo-assignee-btn:hover { border-color: var(--sunset); transform: scale(1.1); }
+  .todo-assignee-btn.a-all { border-color: var(--gold); background: var(--gold); color: white; }
+
+  /* Assignees chips row */
+  .assignees-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding: 12px 16px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+  }
+  .assignees-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-right: 4px;
+  }
+  .assignee-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 6px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    cursor: default;
+  }
+  .assignee-chip .chip-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .assignee-chip .chip-remove {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 2px;
+    margin-left: 2px;
+  }
+  .assignee-chip .chip-remove:hover { color: white; }
+  .add-assignee-btn {
+    padding: 5px 12px;
+    border: 1px dashed var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .add-assignee-btn:hover { background: var(--line-2); color: var(--ink); border-style: solid; }
   .todo-due.unset:hover { opacity: 1; background: var(--line-2); }
   .todo-due-input {
     font-size: 11px;
@@ -1695,6 +1783,10 @@
     <h2>ToDo</h2>
     <p class="section-sub">Það sem eftir er að klára fyrir ferðina.</p>
 
+    <div class="assignees-row" id="assignees-row">
+      <span class="assignees-label">Fólk:</span>
+    </div>
+
     <div class="todo-progress-card">
       <div class="todo-progress-head">
         <span class="todo-progress-label" id="todo-count">0 af 0 klárað</span>
@@ -1985,12 +2077,13 @@ const ACTIVITY_TYPES = [
 const getType = id => ACTIVITY_TYPES.find(t => t.id === id) || ACTIVITY_TYPES[ACTIVITY_TYPES.length - 1];
 
 const DEFAULT_DATA = {
-  _version: 5,
+  _version: 6,
   fields: {},
   hotels: [],
   schedule: {},
   dayThemes: {},
   todos: [],
+  assignees: [],
   geocodeCache: {},
   childcare: {},
   dogcare: {},
@@ -2116,11 +2209,18 @@ function migrate(data) {
   if (v < 5) {
     if (!data.caregiverColors || typeof data.caregiverColors !== 'object') data.caregiverColors = {};
     if (data.exchangeRate === undefined) data.exchangeRate = null;
-    // Add currency field to existing budget rows (default ISK)
     if (Array.isArray(data.budget)) {
       data.budget.forEach(b => { if (!b.currency) b.currency = 'ISK'; });
     }
     data._version = 5;
+  }
+
+  if (v < 6) {
+    if (!Array.isArray(data.assignees)) data.assignees = [];
+    if (Array.isArray(data.todos)) {
+      data.todos.forEach(t => { if (t.assignee === undefined) t.assignee = ''; });
+    }
+    data._version = 6;
   }
 
   return data;
@@ -3617,6 +3717,54 @@ function todoDueLabel(due) {
   return short;
 }
 
+const ASSIGNEE_COLORS = ['#a78bda', '#e9c46a', '#6fb3a8', '#ce87b7', '#8ca1d8', '#f4a68a'];
+
+function assigneeColor(name) {
+  const list = DATA.assignees || [];
+  const idx = list.findIndex(n => n.toLowerCase() === (name || '').toLowerCase());
+  return idx >= 0 ? ASSIGNEE_COLORS[idx % ASSIGNEE_COLORS.length] : 'var(--muted)';
+}
+
+function renderAssignees() {
+  const container = document.getElementById('assignees-row');
+  if (!container) return;
+  container.innerHTML = '<span class="assignees-label">Fólk:</span>';
+  (DATA.assignees || []).forEach((name, i) => {
+    const color = ASSIGNEE_COLORS[i % ASSIGNEE_COLORS.length];
+    const chip = document.createElement('span');
+    chip.className = 'assignee-chip';
+    chip.style.background = color;
+    chip.innerHTML = `
+      <span class="chip-avatar">${escapeHtml(name.charAt(0).toUpperCase())}</span>
+      ${escapeHtml(name)}
+      <button class="chip-remove" title="Fjarlægja">×</button>
+    `;
+    chip.querySelector('.chip-remove').addEventListener('click', () => {
+      DATA.assignees.splice(i, 1);
+      // Clear assignee from todos that had this name
+      (DATA.todos || []).forEach(t => {
+        if (t.assignee && t.assignee.toLowerCase() === name.toLowerCase()) t.assignee = '';
+      });
+      save();
+      renderAssignees();
+      renderTodos();
+    });
+    container.appendChild(chip);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-assignee-btn';
+  addBtn.textContent = '+ Bæta við';
+  addBtn.addEventListener('click', () => {
+    const name = prompt('Nafn:');
+    if (!name || !name.trim()) return;
+    if (!DATA.assignees) DATA.assignees = [];
+    DATA.assignees.push(name.trim());
+    save();
+    renderAssignees();
+  });
+  container.appendChild(addBtn);
+}
+
 function renderTodos() {
   const container = document.getElementById('todos-list');
   if (!container) return;
@@ -3658,15 +3806,32 @@ function renderTodos() {
   }
 
   updateTodoProgress();
+  renderAssignees();
 }
 
 function todoRow(t) {
   const row = document.createElement('div');
   row.className = 'todo-item' + (t.done ? ' done' : '');
   const dueClass = todoDueClass(t.due);
+
+  // Assignee badge
+  const assignees = DATA.assignees || [];
+  const hasAssignee = t.assignee && t.assignee !== '';
+  const isAll = t.assignee === '__all__';
+  let assigneeBadge;
+  if (isAll) {
+    assigneeBadge = `<button class="todo-assignee-btn a-all" title="Bæði">👫</button>`;
+  } else if (hasAssignee) {
+    const color = assigneeColor(t.assignee);
+    assigneeBadge = `<button class="todo-assignee-btn" style="border-color:${color}; background:${color}; color:white;" title="${escapeAttr(t.assignee)}">${escapeHtml(t.assignee.charAt(0).toUpperCase())}</button>`;
+  } else {
+    assigneeBadge = `<button class="todo-assignee-btn" title="Úthluta">👤</button>`;
+  }
+
   row.innerHTML = `
     <input type="checkbox" class="todo-check" ${t.done ? 'checked' : ''}>
     <input type="text" class="todo-text" value="${escapeAttr(t.text)}">
+    ${assigneeBadge}
     <button class="todo-due ${dueClass}" data-action="edit-due">${todoDueLabel(t.due)}</button>
     <button class="todo-remove" title="Fjarlægja">×</button>
   `;
@@ -3675,6 +3840,7 @@ function todoRow(t) {
   const txt = row.querySelector('.todo-text');
   const dueBtn = row.querySelector('.todo-due');
   const rm = row.querySelector('.todo-remove');
+  const assigneeBtn = row.querySelector('.todo-assignee-btn');
 
   cb.addEventListener('change', () => {
     t.done = cb.checked;
@@ -3684,6 +3850,26 @@ function todoRow(t) {
   });
 
   txt.addEventListener('input', () => { t.text = txt.value; save(); });
+
+  // Click assignee badge: cycle through '' → each assignee → '__all__' → ''
+  assigneeBtn.addEventListener('click', () => {
+    if (!assignees.length) {
+      const name = prompt('Enginn skráður enn. Bættu við nafni:');
+      if (name && name.trim()) {
+        DATA.assignees.push(name.trim());
+        t.assignee = name.trim();
+        save();
+        renderTodos();
+      }
+      return;
+    }
+    const cycle = ['', ...assignees, '__all__'];
+    const current = cycle.indexOf(t.assignee);
+    const next = (current + 1) % cycle.length;
+    t.assignee = cycle[next];
+    save();
+    renderTodos();
+  });
 
   dueBtn.addEventListener('click', () => {
     // Replace button with date input
