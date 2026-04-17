@@ -3838,7 +3838,10 @@ function initAll() {
 updateCountdown();
 setInterval(updateCountdown, 60000);
 initAll();
-startSyncListener();
+// Delay sync listener so all initial async operations (geocoding, FX rate)
+// finish their save() calls before we start listening for remote changes.
+// This prevents the listener from treating our own startup writes as "remote".
+setTimeout(startSyncListener, 4000);
 </script>
 
 </body>
