@@ -1,0 +1,3733 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barcelona ❤️</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root {
+    --bg: #f8f5fc;
+    --paper: #ffffff;
+    --ink: #1d1825;
+    --ink-2: #423a50;
+    --muted: #867c92;
+    --line: #ebe2f0;
+    --line-2: #f3eef7;
+
+    --sunset: #a78bda;
+    --sunset-dark: #8b6fbf;
+    --sea: #7b5fc4;
+    --sea-dark: #6149a8;
+    --gold: #e9c46a;
+    --gold-soft: #f5e6b6;
+    --night: #2d2540;
+
+    --shadow-sm: 0 1px 2px rgba(26, 22, 19, 0.04), 0 1px 1px rgba(26, 22, 19, 0.03);
+    --shadow: 0 4px 12px rgba(26, 22, 19, 0.06), 0 2px 4px rgba(26, 22, 19, 0.04);
+    --shadow-lg: 0 12px 32px rgba(26, 22, 19, 0.08), 0 4px 8px rgba(26, 22, 19, 0.04);
+
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-lg: 20px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }
+
+  /* HERO */
+  header.hero {
+    position: relative;
+    background:
+      radial-gradient(ellipse at top right, rgba(233, 196, 106, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, rgba(255, 200, 220, 0.3) 0%, transparent 55%),
+      linear-gradient(115deg, #8b6fbf 0%, #a78bda 45%, #dfc8ee 100%);
+    color: white;
+    padding: 44px 24px 40px;
+    overflow: hidden;
+  }
+  header.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 35%, rgba(255, 255, 255, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 85% 70%, rgba(255, 255, 255, 0.06) 0%, transparent 35%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-kicker {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 10px;
+  }
+  .hero h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(36px, 6vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--gold-soft);
+  }
+  .hero h1 .heart {
+    display: inline-block;
+    font-size: 0.78em;
+    vertical-align: middle;
+    margin-left: 0.12em;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12));
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 18px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .chip.accent {
+    background: rgba(26, 22, 19, 0.25);
+    color: white;
+  }
+
+  /* TABS */
+  nav.tabs {
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  .tabs-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2px;
+    padding: 0 16px;
+  }
+  .tab {
+    background: none;
+    border: none;
+    padding: 16px 14px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: inherit;
+    transition: all 0.18s ease;
+    position: relative;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 8px; right: 8px;
+    height: 2px;
+    background: var(--sunset);
+    border-radius: 2px 2px 0 0;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+  }
+  .panel { display: none; animation: fadeIn 0.25s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  .section-sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 24px;
+  }
+  h3 {
+    margin: 0 0 14px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3 .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--sunset);
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow: var(--shadow); }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+  }
+  @media (max-width: 640px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  .full { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  input[type="text"], input[type="number"], input[type="date"], input[type="time"], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--paper);
+    color: var(--ink);
+    margin-bottom: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--sea);
+    box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.12);
+  }
+  textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+
+  button.btn {
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  button.btn:hover { background: var(--ink-2); transform: translateY(-1px); }
+  button.btn-primary {
+    background: var(--sunset);
+  }
+  button.btn-primary:hover { background: var(--sunset-dark); }
+  button.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  button.btn-ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+  }
+  button.btn-ghost:hover { background: var(--line-2); color: var(--ink); transform: none; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* DAY CARDS */
+  .day-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 0;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(to right, var(--line-2), transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .day-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .day-date {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .day-weekday {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 500;
+  }
+  .day-body {
+    padding: 14px 24px 20px;
+  }
+
+  /* ACTIVITY CARD */
+  .activity {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line-2);
+    position: relative;
+  }
+  .activity:last-child { border-bottom: none; }
+
+  .act-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 2px;
+  }
+  .act-time {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    padding: 0;
+    width: 60px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .act-time:focus { outline: none; background: var(--line-2); border-radius: 4px; padding: 0 4px; }
+  .act-icon {
+    font-size: 20px;
+    line-height: 1;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--line-2);
+    margin-top: 4px;
+  }
+
+  .act-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .act-top-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .act-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+  }
+  .act-title:focus { outline: none; background: var(--line-2); border-radius: 4px; padding: 2px 6px; }
+  .act-type-select {
+    width: auto;
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper);
+    margin: 0;
+    cursor: pointer;
+  }
+  .act-address {
+    font-size: 13px;
+    color: var(--muted);
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+  .act-address:focus { outline: none; background: var(--line-2); border-radius: 4px; padding: 2px 6px; color: var(--ink); }
+
+  .act-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 12px;
+  }
+  .meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--ink-2);
+    background: var(--line-2);
+    border: 1px solid transparent;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .meta-chip:hover { background: var(--line); color: var(--ink); }
+  .meta-chip.distance {
+    background: rgba(42, 157, 143, 0.1);
+    color: var(--sea-dark);
+  }
+  .meta-chip.booking {
+    background: rgba(231, 111, 81, 0.1);
+    color: var(--sunset-dark);
+  }
+  .meta-chip.booking::before { content: '🎟️'; }
+  .meta-chip.loading {
+    opacity: 0.6;
+    font-style: italic;
+  }
+
+  .act-notes {
+    font-size: 13px;
+    color: var(--ink-2);
+    border: none;
+    background: transparent;
+    padding: 4px 0 0;
+    min-height: 20px;
+    resize: none;
+    line-height: 1.4;
+  }
+  .act-notes:focus { outline: none; background: var(--line-2); border-radius: 4px; padding: 4px 6px; }
+  .act-notes::placeholder { color: var(--muted); font-style: italic; }
+
+  .act-remove {
+    position: absolute;
+    right: 0;
+    top: 14px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .activity:hover .act-remove { opacity: 1; }
+  .act-remove:hover { color: var(--sunset); background: var(--line-2); }
+
+  .act-booking-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .act-booking-input {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-2);
+    margin: 0;
+  }
+
+  .title-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+  .search-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 13px;
+    border-radius: 4px;
+  }
+  .search-toggle:hover { background: var(--line-2); color: var(--sunset-dark); }
+
+  .place-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 6px;
+  }
+  .place-dropdown-header {
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--line-2);
+    background: var(--line-2);
+  }
+  .place-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line-2);
+    transition: background 0.12s;
+  }
+  .place-item:last-child { border-bottom: none; }
+  .place-item:hover { background: var(--line-2); }
+  .place-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .place-addr {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .place-empty {
+    padding: 14px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .day-add {
+    margin-top: 10px;
+    padding: 10px;
+    text-align: center;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .day-add:hover { background: var(--line-2); color: var(--ink); border-color: var(--muted); border-style: solid; }
+
+  /* DAY: enhanced header */
+  .day-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .day-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hotel-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px 5px 9px;
+    border-radius: 999px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hotel-badge.salou { border-color: #6fb3a8; color: #47847a; background: #e8f5f3; }
+  .hotel-badge.bcn { border-color: var(--sunset); color: var(--sunset-dark); background: #f5edfa; }
+  .day-theme-row {
+    width: 100%;
+    padding: 12px 24px 0;
+  }
+  .day-theme {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 15px;
+    font-style: italic;
+    color: var(--ink-2);
+    padding: 4px 0;
+    margin: 0;
+  }
+  .day-theme:focus {
+    outline: none;
+    background: var(--line-2);
+    border-radius: 6px;
+    padding: 4px 10px;
+  }
+  .day-theme::placeholder { color: var(--muted); opacity: 0.6; font-style: italic; }
+
+  /* DAY: mini map */
+  .day-map {
+    height: 170px;
+    margin: 14px 24px 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--line-2);
+    overflow: hidden;
+    position: relative;
+  }
+  .day-map .leaflet-container {
+    height: 100%;
+    width: 100%;
+    font-family: inherit;
+    background: var(--line-2);
+  }
+  .day-map-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-style: italic;
+  }
+  .map-pin {
+    font-size: 20px;
+    text-align: center;
+    line-height: 28px;
+    width: 28px;
+    height: 28px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+    background: white;
+    border-radius: 50%;
+    border: 2px solid var(--sunset);
+  }
+  .map-pin.hotel { border-color: var(--gold); background: #fff7e0; }
+  .leaflet-container a { color: var(--sunset-dark); }
+
+  /* SECTIONS */
+  .day-section {
+    padding: 4px 24px 4px;
+  }
+  .day-section:first-of-type { padding-top: 10px; }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    color: var(--muted);
+    border-top: 1px dashed var(--line);
+    margin-top: 8px;
+  }
+  .section-head:first-child, .day-section:first-of-type .section-head {
+    border-top: none;
+    margin-top: 0;
+  }
+  .section-icon { font-size: 14px; }
+
+  /* ACTIVITY: type colors (icon background + left accent bar) */
+  .activity { position: relative; }
+  .activity::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 16px;
+    bottom: 16px;
+    width: 3px;
+    border-radius: 2px;
+    background: transparent;
+  }
+  .activity.t-restaurant::before { background: #e89a7a; }
+  .activity.t-restaurant .act-icon { background: #fde4d5; }
+  .activity.t-cafe::before { background: #b08968; }
+  .activity.t-cafe .act-icon { background: #ecdcc8; }
+  .activity.t-bar::before { background: #9e5e72; }
+  .activity.t-bar .act-icon { background: #efd8df; }
+  .activity.t-museum::before { background: #6495b8; }
+  .activity.t-museum .act-icon { background: #d7e4ee; }
+  .activity.t-sight::before { background: #7c9870; }
+  .activity.t-sight .act-icon { background: #d9e6d2; }
+  .activity.t-walk::before { background: #d4a24a; }
+  .activity.t-walk .act-icon { background: #f5e6c5; }
+  .activity.t-beach::before { background: #e9c88b; }
+  .activity.t-beach .act-icon { background: #f7ecd1; }
+  .activity.t-shop::before { background: #c78ba5; }
+  .activity.t-shop .act-icon { background: #eed6e1; }
+  .activity.t-event::before { background: #a78bda; }
+  .activity.t-event .act-icon { background: #e5daf4; }
+  .activity.t-transport::before { background: #8a9ba8; }
+  .activity.t-transport .act-icon { background: #d9dfe4; }
+  .activity.t-other::before { background: var(--line); }
+
+  /* TRANSIT between activities */
+  .transit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0 4px 74px;
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+    position: relative;
+    min-height: 24px;
+  }
+  .transit::before {
+    content: '';
+    position: absolute;
+    left: 29px;
+    top: 0;
+    bottom: 0;
+    border-left: 2px dashed var(--line);
+  }
+  .transit .transit-icon {
+    font-style: normal;
+    font-size: 14px;
+  }
+  .free-time {
+    display: inline-block;
+    margin: 6px 0 6px 74px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+    background: var(--line-2);
+    border-radius: 999px;
+  }
+
+  /* PACKING */
+  .packing-category {
+    margin-bottom: 14px;
+  }
+  .pack-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--line-2);
+  }
+  .pack-item:last-child { border-bottom: none; }
+  .pack-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--sunset);
+    margin: 0;
+  }
+  .pack-item input[type="text"] {
+    flex: 1;
+    margin: 0;
+    border: none;
+    background: transparent;
+    padding: 2px 0;
+    font-size: 14px;
+  }
+  .pack-item input[type="text"]:focus {
+    box-shadow: none;
+    background: var(--line-2);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+  .pack-item.checked input[type="text"] {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+  .pack-item .remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 4px 8px;
+  }
+  .pack-item:hover .remove { opacity: 1; }
+
+  /* BUDGET */
+  .budget-wrap {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  table.budget {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.budget th, table.budget td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line-2);
+    font-size: 14px;
+  }
+  table.budget tr:last-child td { border-bottom: none; }
+  table.budget th {
+    background: var(--line-2);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  table.budget td input {
+    margin: 0;
+    border: none;
+    background: transparent;
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  table.budget td input:focus { background: var(--line-2); }
+
+  .budget-totals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  @media (max-width: 640px) {
+    .budget-totals { grid-template-columns: 1fr; }
+  }
+  .total-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+  }
+  .total-card.accent {
+    background: var(--night);
+    color: white;
+    border-color: var(--night);
+  }
+  .total-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    opacity: 0.75;
+    margin-bottom: 4px;
+  }
+  .total-amount {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* CARE */
+  .care-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 640px) {
+    .care-block { grid-template-columns: 1fr; }
+  }
+  .care-section {
+    background: var(--line-2);
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+  }
+  .care-section.night { background: linear-gradient(135deg, #2a3550, #1a2340); color: #ffe3a0; }
+  .care-section.day { background: linear-gradient(135deg, #fff6d4, #f5e0a0); color: #4a3a1a; }
+  .care-section label { color: inherit; opacity: 0.85; margin-bottom: 8px; }
+  .care-section input {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: inherit;
+  }
+  .care-section.day input {
+    background: rgba(255,255,255,0.5);
+    border-color: rgba(0,0,0,0.08);
+    color: #4a3a1a;
+  }
+  .care-section input::placeholder { color: inherit; opacity: 0.5; }
+
+  /* DAY NUMBER BADGE */
+  .day-num {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--sunset);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-left: 6px;
+    vertical-align: 2px;
+  }
+
+  /* DUPLICATE BUTTON (on activities) */
+  .act-duplicate {
+    position: absolute;
+    right: 32px;
+    top: 14px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .activity:hover .act-duplicate { opacity: 1; }
+  .act-duplicate:hover { color: var(--sea-dark); background: var(--line-2); }
+
+  /* GANTT INLINE EDITOR */
+  .g-slot-edit {
+    position: relative;
+    z-index: 10;
+  }
+  .g-slot-edit input {
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--sunset);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    outline: none;
+  }
+
+  /* PACKING GLOBAL PROGRESS */
+  .packing-global {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .packing-global-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .packing-global-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  .packing-global-pct {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sunset-dark);
+    letter-spacing: -0.01em;
+  }
+
+  /* TODOS */
+  .todo-progress-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .todo-progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .todo-progress-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  .todo-progress-pct {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sunset-dark);
+    letter-spacing: -0.01em;
+  }
+  .progress-bar {
+    height: 8px;
+    background: var(--line-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--sunset), var(--gold));
+    border-radius: 999px;
+    transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    width: 0%;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+  }
+  .todo-item:hover { border-color: var(--sunset); }
+  .todo-item.done {
+    background: var(--line-2);
+    box-shadow: none;
+    opacity: 0.65;
+  }
+  .todo-item.done:hover { border-color: var(--line); }
+  .todo-check {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--sunset);
+    flex-shrink: 0;
+  }
+  .todo-text {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    padding: 4px 6px;
+    margin: 0;
+    border-radius: 4px;
+    color: var(--ink);
+    font-family: inherit;
+    min-width: 0;
+  }
+  .todo-text:focus { outline: none; background: var(--line-2); }
+  .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
+  .todo-due {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-2);
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--line-2);
+    white-space: nowrap;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+  .todo-due.soon { color: #9c6a0c; background: #fbe9cf; }
+  .todo-due.overdue { color: #a83a22; background: #fadbd5; }
+  .todo-due.unset { color: var(--muted); background: transparent; font-weight: 500; opacity: 0.6; }
+  .todo-due.unset:hover { opacity: 1; background: var(--line-2); }
+  .todo-due-input {
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid var(--sunset);
+    border-radius: 999px;
+    background: var(--paper);
+    margin: 0;
+    width: 130px;
+  }
+  .todo-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .todo-item:hover .todo-remove { opacity: 1; }
+  .todo-remove:hover { color: var(--sunset); background: var(--paper); }
+
+  .todo-add {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--paper);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+    margin-top: 14px;
+    transition: border-color 0.15s;
+  }
+  .todo-add:focus-within { border-color: var(--sunset); border-style: solid; }
+  .todo-add input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    padding: 4px 6px;
+    margin: 0;
+  }
+  .todo-add input:focus { box-shadow: none; }
+
+  .todos-divider {
+    margin: 20px 0 12px;
+    padding: 0 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .todos-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* HOTELS (multi) */
+  .hotel-card {
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .hotel-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 14px; bottom: 14px;
+    width: 3px;
+    background: var(--sunset);
+    border-radius: 0 3px 3px 0;
+  }
+  .hotel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .hotel-num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+  }
+  .hotel-nights {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    padding: 3px 10px;
+    background: var(--line-2);
+    border-radius: 999px;
+  }
+  .hotel-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0.6;
+  }
+  .hotel-delete:hover { opacity: 1; color: var(--sunset-dark); background: var(--line-2); }
+  .add-hotel-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 14px;
+    transition: all 0.15s;
+  }
+  .add-hotel-btn:hover { background: var(--line-2); color: var(--ink); border-style: solid; border-color: var(--sunset); }
+
+  /* GANTT */
+  .gantt-wrap {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+  .gantt-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .gantt-title h3 { margin: 0; }
+  .gantt {
+    display: grid;
+    grid-template-columns: 90px repeat(8, minmax(64px, 1fr));
+    gap: 3px;
+    background: var(--line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    min-width: 620px;
+  }
+  .g-cell {
+    background: var(--paper);
+    padding: 8px 4px;
+    font-size: 11px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .g-header {
+    background: var(--line-2);
+    font-weight: 600;
+    color: var(--ink);
+    flex-direction: column;
+    gap: 1px;
+    padding: 10px 4px;
+  }
+  .g-header .g-date {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .g-header .g-wd {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .g-row-label {
+    background: var(--line-2);
+    font-weight: 600;
+    font-size: 12px;
+    justify-content: flex-start;
+    padding-left: 12px;
+    gap: 6px;
+  }
+  .g-slot {
+    font-weight: 600;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 8px 6px;
+  }
+  .g-slot.empty {
+    color: var(--muted);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 11px;
+    background: var(--paper);
+  }
+  .g-slot:hover { filter: brightness(1.08); }
+  .g-slot:active { transform: scale(0.98); }
+
+  .gantt-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-2);
+    font-size: 13px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .gantt-empty {
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  /* WEATHER */
+  .weather-card {
+    background: linear-gradient(135deg, #e5ddf5 0%, #fbeddb 55%, #fff4d6 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .weather-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .weather-head h3 { font-family: inherit; }
+  .weather-sub {
+    font-size: 11px;
+    color: var(--ink-2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.55);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .weather-climatology {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+  .weather-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .weather-stat .val {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .weather-stat .lbl {
+    font-size: 10px;
+    color: var(--ink-2);
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    font-weight: 600;
+    opacity: 0.75;
+  }
+  .weather-forecast {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+    gap: 8px;
+  }
+  .weather-day {
+    text-align: center;
+    padding: 10px 6px;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  .weather-day .wd-date {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+  }
+  .weather-day .wd-icon { font-size: 22px; margin: 4px 0; line-height: 1; }
+  .weather-day .wd-temp {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .weather-day .wd-temp-lo { color: var(--muted); font-weight: 400; }
+
+  /* BUDGET: currency selector */
+  .ccy-select {
+    padding: 4px 6px !important;
+    font-size: 13px !important;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    margin: 0;
+  }
+  .ccy-select:focus { outline: none; border-color: var(--sunset); }
+  .amount-converted {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* FOOTER */
+  .footer-bar {
+    text-align: center;
+    padding: 40px 20px 20px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .footer-bar .btn-row {
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.25s ease;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .empty-hint {
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* PRINT: clean, paper-friendly view of the schedule */
+  @media print {
+    @page { margin: 16mm 14mm; size: A4; }
+    body { background: white; color: black; font-size: 11pt; }
+    header.hero, nav.tabs, .footer-bar, .no-print, .act-duplicate, .act-remove,
+    .day-add, .day-map, .act-type-select, .day-theme-row,
+    .place-dropdown, .toast { display: none !important; }
+    main { padding: 0; max-width: 100%; }
+    .panel { display: none !important; }
+    .panel#schedule { display: block !important; }
+    .panel#schedule h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 22pt;
+      margin-bottom: 4pt;
+      border-bottom: 2px solid #333;
+      padding-bottom: 6pt;
+    }
+    .panel#schedule .section-sub { display: none; }
+    .day-card {
+      box-shadow: none !important;
+      border: 1px solid #aaa !important;
+      border-radius: 8px !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 12pt !important;
+      background: white !important;
+    }
+    .day-header {
+      background: #f5f5f5 !important;
+      padding: 10pt 14pt !important;
+    }
+    .day-date { font-size: 15pt !important; }
+    .day-weekday { font-size: 10pt !important; }
+    .day-num {
+      background: #333 !important;
+      color: white !important;
+      font-size: 8pt !important;
+    }
+    .hotel-badge {
+      background: #eee !important;
+      border: 1px solid #ccc !important;
+      color: #333 !important;
+    }
+    .activity {
+      padding: 8pt 14pt !important;
+      border-bottom: 1px solid #eee !important;
+      break-inside: avoid;
+    }
+    .activity::before { display: none; }
+    .act-icon {
+      background: #f0f0f0 !important;
+      border: 1px solid #ddd !important;
+    }
+    .act-time {
+      font-weight: bold !important;
+      color: #333 !important;
+    }
+    .act-title, .act-address, .act-booking-input {
+      border: none !important;
+      background: transparent !important;
+      color: black !important;
+      padding: 1pt 0 !important;
+    }
+    .act-address { font-size: 9pt; color: #666 !important; }
+    .meta-chip {
+      background: #f0f0f0 !important;
+      color: #333 !important;
+      border: 1px solid #ddd !important;
+    }
+    .meta-chip.loading { display: none !important; }
+    .transit {
+      color: #666 !important;
+      font-size: 9pt !important;
+      padding: 4pt 0 4pt 74pt !important;
+    }
+    .transit::before {
+      border-left-color: #ccc !important;
+    }
+    .day-body { padding-bottom: 6pt !important; }
+    a.meta-chip { display: none !important; }  /* map links useless on paper */
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-kicker">Paraferð · 21. til 28. maí 2026</div>
+    <h1>Barcelona <span class="heart">❤️</span></h1>
+    <div class="hero-meta">
+      <span class="chip" id="countdown">…</span>
+      <span class="chip accent">🌞 ~23°C · sól</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab active" data-panel="overview">Yfirlit</button>
+    <button class="tab" data-panel="todos">ToDo</button>
+    <button class="tab" data-panel="schedule">Dagskrá</button>
+    <button class="tab" data-panel="childcare">Sóley pössun</button>
+    <button class="tab" data-panel="dogcare">Mía pössun</button>
+    <button class="tab" data-panel="packing">Pökkunarlisti</button>
+    <button class="tab" data-panel="budget">Budget</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- YFIRLIT -->
+  <section class="panel active" id="overview">
+    <h2>Yfirlit</h2>
+    <p class="section-sub">Flug, hótel og mikilvægar upplýsingar.</p>
+
+    <div class="weather-card" id="weather-card">
+      <div class="weather-head">
+        <h3 style="margin:0;">🌤️ Veður · Barcelona / Salou</h3>
+        <span class="weather-sub" id="weather-status">…</span>
+      </div>
+      <div id="weather-body"></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="dot"></span>Útflug · 21. maí 2026</h3>
+      <div class="grid-2">
+        <div>
+          <label>Flugnúmer</label>
+          <input type="text" data-key="flight_out_num" placeholder="t.d. FI560">
+        </div>
+        <div>
+          <label>Flugfélag</label>
+          <input type="text" data-key="flight_out_airline" placeholder="t.d. Icelandair">
+        </div>
+        <div>
+          <label>Brottför (KEF)</label>
+          <input type="time" data-key="flight_out_depart">
+        </div>
+        <div>
+          <label>Lending (BCN)</label>
+          <input type="time" data-key="flight_out_arrive">
+        </div>
+        <div>
+          <label>Bókunarnúmer</label>
+          <input type="text" data-key="flight_out_ref">
+        </div>
+        <div>
+          <label>Sæti</label>
+          <input type="text" data-key="flight_out_seats">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="dot"></span>Heimflug · 28. maí 2026</h3>
+      <div class="grid-2">
+        <div>
+          <label>Flugnúmer</label>
+          <input type="text" data-key="flight_in_num">
+        </div>
+        <div>
+          <label>Flugfélag</label>
+          <input type="text" data-key="flight_in_airline">
+        </div>
+        <div>
+          <label>Brottför (BCN)</label>
+          <input type="time" data-key="flight_in_depart">
+        </div>
+        <div>
+          <label>Lending (KEF)</label>
+          <input type="time" data-key="flight_in_arrive">
+        </div>
+        <div>
+          <label>Bókunarnúmer</label>
+          <input type="text" data-key="flight_in_ref">
+        </div>
+        <div>
+          <label>Sæti</label>
+          <input type="text" data-key="flight_in_seats">
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 28px;"><span class="dot"></span>Hótel</h3>
+    <p class="empty-hint" style="margin-bottom: 14px;">💡 Hvert hótel með sinn check-in / check-out. Gönguvegalengd í dagskrá reiknast frá hótelinu sem þú gistir á þann dag.</p>
+    <div id="hotels-container"></div>
+    <button class="add-hotel-btn" id="add-hotel">+ Bæta við hóteli</button>
+
+    <div class="card">
+      <h3><span class="dot"></span>Mikilvæg atriði</h3>
+      <textarea data-key="overview_notes" style="min-height: 120px;" placeholder="T.d. tryggingar, vegabréf, símanúmer í neyð..."></textarea>
+    </div>
+  </section>
+
+  <!-- AÐ GERA -->
+  <section class="panel" id="todos">
+    <h2>ToDo</h2>
+    <p class="section-sub">Það sem eftir er að klára fyrir ferðina.</p>
+
+    <div class="todo-progress-card">
+      <div class="todo-progress-head">
+        <span class="todo-progress-label" id="todo-count">0 af 0 klárað</span>
+        <span class="todo-progress-pct" id="todo-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="todo-progress-fill"></div></div>
+    </div>
+
+    <div id="todos-list"></div>
+
+    <div class="todo-add">
+      <input type="text" id="todo-input" placeholder="Ný uppgáfa... (Enter til að bæta við)">
+      <button class="btn btn-primary btn-sm" id="todo-add-btn">Bæta við</button>
+    </div>
+  </section>
+
+  <!-- DAGSKRÁ -->
+  <section class="panel" id="schedule">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 6px; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h2 style="margin-bottom: 4px;">Dagskrá</h2>
+        <p class="section-sub" style="margin: 0;">Bættu við veitingastöðum, söfnum og upplifunum. Gönguvegalengd frá hótelinu reiknast sjálfkrafa.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm no-print" id="print-schedule">🖨️ Prenta / PDF</button>
+    </div>
+    <div id="schedule-days"></div>
+  </section>
+
+  <!-- SÓLEY PÖSSUN -->
+  <section class="panel" id="childcare">
+    <h2>Sóley pössun</h2>
+    <p class="section-sub">Hver passar Sóley hvenær, dag og nótt aðskilin.</p>
+
+    <div class="gantt-wrap">
+      <div class="gantt-title">
+        <h3><span class="dot"></span>Yfirlit</h3>
+        <span class="empty-hint" style="font-size: 12px;">Smelltu á reit til að breyta</span>
+      </div>
+      <div id="gantt"></div>
+    </div>
+
+    <div id="childcare-days"></div>
+    <div class="card" style="margin-top: 20px;">
+      <h3><span class="dot"></span>Tengiliðir</h3>
+      <textarea data-key="contacts" style="min-height: 120px;" placeholder="Nafn · símanúmer · hlutverk&#10;Amma Sigga · 555-1234 · aðal passari&#10;Nágranni · 555-5678 · varabakki"></textarea>
+    </div>
+  </section>
+
+  <!-- MÍA PÖSSUN -->
+  <section class="panel" id="dogcare">
+    <h2>Mía pössun 🐕</h2>
+    <p class="section-sub">Hvar er Mía hvern dag og hver sér um hana.</p>
+
+    <div class="gantt-wrap">
+      <div class="gantt-title">
+        <h3><span class="dot"></span>Yfirlit</h3>
+        <span class="empty-hint" style="font-size: 12px;">Smelltu á reit til að breyta</span>
+      </div>
+      <div id="gantt-mia"></div>
+    </div>
+
+    <div id="dogcare-days"></div>
+    <div class="card" style="margin-top: 20px;">
+      <h3><span class="dot"></span>Tengiliðir Mía</h3>
+      <textarea data-key="dogcontacts" style="min-height: 120px;" placeholder="Nafn · símanúmer · hlutverk&#10;Hundahótel Akurgarðar · 555-1234&#10;Dýralæknir · 555-5678&#10;Amma · 555-9012 · tekur Mía í göngu"></textarea>
+    </div>
+  </section>
+
+  <!-- PÖKKUNARLISTI -->
+  <section class="panel" id="packing">
+    <h2>Pökkunarlisti</h2>
+    <p class="section-sub">Krossaðu af eftir því sem þú pakkar.</p>
+    <div class="packing-global">
+      <div class="packing-global-head">
+        <span class="packing-global-label" id="packing-count">0 af 0 pakkað</span>
+        <span class="packing-global-pct" id="packing-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="packing-progress-fill"></div></div>
+    </div>
+    <div id="packing-categories"></div>
+    <button class="btn btn-ghost" id="add-category">+ Nýr flokkur</button>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="panel" id="budget">
+    <h2>Budget</h2>
+    <p class="section-sub">Áætlað vs. raun, með sjálfvirkum samtölum. <span id="fx-rate" style="margin-left: 6px; font-size: 12px; color: var(--muted);"></span></p>
+    <div class="budget-wrap">
+      <table class="budget">
+        <thead>
+          <tr>
+            <th>Flokkur</th>
+            <th>Lýsing</th>
+            <th style="width: 70px;">Mynt</th>
+            <th style="width: 130px; text-align: right;">Áætlað</th>
+            <th style="width: 130px; text-align: right;">Raun</th>
+            <th style="width: 80px; text-align: center;">Greitt</th>
+            <th style="width: 40px;"></th>
+          </tr>
+        </thead>
+        <tbody id="budget-rows"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="add-budget" style="margin-top: 12px;">+ Ný lína</button>
+    <div class="budget-totals">
+      <div class="total-card">
+        <div class="total-label">Áætlað</div>
+        <div class="total-amount" id="total-planned">0 kr</div>
+      </div>
+      <div class="total-card">
+        <div class="total-label">Raun</div>
+        <div class="total-amount" id="total-actual">0 kr</div>
+      </div>
+      <div class="total-card accent">
+        <div class="total-label">Greitt</div>
+        <div class="total-amount" id="total-paid">0 kr</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer-bar">
+    Allt vistast sjálfkrafa í vafranum þínum.
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">📥 Flytja út afrit</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">📤 Flytja inn afrit</button>
+      <input type="file" id="import-file" style="display:none" accept=".json" onchange="importData(event)">
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'barcelona2026';
+const TRIP_START = new Date(2026, 4, 21);
+const TRIP_END = new Date(2026, 4, 28);
+const WEEKDAYS = ['Sun', 'Mán', 'Þri', 'Mið', 'Fim', 'Fös', 'Lau'];
+const WEEKDAYS_LONG = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
+
+const DAYS = [];
+for (let d = new Date(TRIP_START); d <= TRIP_END; d.setDate(d.getDate() + 1)) {
+  DAYS.push({
+    key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+    date: `${d.getDate()}. maí`,
+    weekday: WEEKDAYS_LONG[d.getDay()]
+  });
+}
+
+const ACTIVITY_TYPES = [
+  { id: 'restaurant', icon: '🍽️', label: 'Veitingastaður' },
+  { id: 'cafe',       icon: '☕',  label: 'Kaffihús' },
+  { id: 'bar',        icon: '🍷', label: 'Bar / drykkir' },
+  { id: 'museum',     icon: '🏛️', label: 'Safn / sýning' },
+  { id: 'sight',      icon: '🎨', label: 'Skoðun' },
+  { id: 'walk',       icon: '🚶', label: 'Gönguferð' },
+  { id: 'beach',      icon: '🏖️', label: 'Strönd' },
+  { id: 'shop',       icon: '🛍️', label: 'Verslun' },
+  { id: 'event',      icon: '🎭', label: 'Viðburður' },
+  { id: 'transport',  icon: '✈️', label: 'Samgöngur' },
+  { id: 'other',      icon: '📍', label: 'Annað' }
+];
+const getType = id => ACTIVITY_TYPES.find(t => t.id === id) || ACTIVITY_TYPES[ACTIVITY_TYPES.length - 1];
+
+const DEFAULT_DATA = {
+  _version: 5,
+  fields: {},
+  hotels: [],
+  schedule: {},
+  dayThemes: {},
+  todos: [],
+  geocodeCache: {},
+  childcare: {},
+  dogcare: {},
+  caregiverColors: {},
+  exchangeRate: null,
+  packing: [
+    { name: 'Skjöl', items: [
+      { text: 'Vegabréf', done: false },
+      { text: 'Flugmiðar', done: false },
+      { text: 'Hótelbókun', done: false },
+      { text: 'Tryggingaskjöl', done: false },
+      { text: 'Kreditkort + evrur', done: false }
+    ]},
+    { name: 'Föt', items: [
+      { text: 'Sumarföt (~25°C)', done: false },
+      { text: 'Þægilegir gönguskór', done: false },
+      { text: 'Kvöldklæðnaður', done: false },
+      { text: 'Léttur jakki fyrir kvöld', done: false },
+      { text: 'Sundföt', done: false }
+    ]},
+    { name: 'Snyrtivörur', items: [
+      { text: 'Sólarvörn', done: false },
+      { text: 'Sólgleraugu', done: false },
+      { text: 'Tannbursti + tannkrem', done: false },
+      { text: 'Lyf (ef einhver)', done: false }
+    ]},
+    { name: 'Tækni', items: [
+      { text: 'Sími + hleðslutæki', done: false },
+      { text: 'Millistykki (EU)', done: false },
+      { text: 'Myndavél', done: false },
+      { text: 'Powerbank', done: false }
+    ]}
+  ],
+  budget: [
+    { cat: 'Flug',            desc: '',                  planned: 0, actual: 0, paid: true },
+    { cat: 'Hótel',           desc: '',                  planned: 0, actual: 0, paid: true },
+    { cat: 'Matur',           desc: '8 dagar',           planned: 0, actual: 0, paid: false },
+    { cat: 'Samgöngur',       desc: 'Metro, leigubílar', planned: 0, actual: 0, paid: false },
+    { cat: 'Söfn/afþreying',  desc: '',                  planned: 0, actual: 0, paid: false },
+    { cat: 'Gjafir/innkaup',  desc: '',                  planned: 0, actual: 0, paid: false }
+  ]
+};
+
+let DATA = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const fresh = structuredClone(DEFAULT_DATA);
+      return applyFirstTimeTemplate(fresh);
+    }
+    const parsed = JSON.parse(raw);
+    const merged = { ...structuredClone(DEFAULT_DATA), ...parsed };
+    // Migrate old schedule entries {time, text} -> full shape
+    if (merged.schedule) {
+      Object.keys(merged.schedule).forEach(k => {
+        merged.schedule[k] = (merged.schedule[k] || []).map(a => ({
+          time: a.time || '',
+          type: a.type || 'other',
+          title: a.title !== undefined ? a.title : (a.text || ''),
+          address: a.address || '',
+          booking: a.booking || '',
+          notes: a.notes || '',
+          coords: a.coords || null,
+          walkingKm: a.walkingKm || null,
+          walkingMin: a.walkingMin || null
+        }));
+      });
+    }
+    return migrate(merged);
+  } catch(e) {
+    return applyFirstTimeTemplate(structuredClone(DEFAULT_DATA));
+  }
+}
+
+function migrate(data) {
+  const v = data._version || 0;
+
+  if (v < 2) {
+    // Move legacy single-hotel fields into the hotels array
+    if (!Array.isArray(data.hotels)) data.hotels = [];
+    const f = data.fields || {};
+    const hadOldHotel = f.hotel_name || f.hotel_address || f.hotel_ref || f.hotel_notes;
+    if (hadOldHotel && data.hotels.length === 0) {
+      data.hotels.push({
+        name: f.hotel_name || 'Hótel',
+        address: f.hotel_address || '',
+        checkin: '',
+        checkout: '',
+        ref: f.hotel_ref || '',
+        phone: f.hotel_phone || '',
+        notes: f.hotel_notes || '',
+        coords: data.hotelCoords ? { lat: data.hotelCoords.lat, lng: data.hotelCoords.lng } : null
+      });
+    }
+    // Clean up legacy keys
+    ['hotel_name','hotel_address','hotel_area','hotel_checkin','hotel_checkout','hotel_ref','hotel_phone','hotel_notes'].forEach(k => delete data.fields[k]);
+    delete data.hotelCoords;
+    data._version = 2;
+
+    // If the user has effectively no trip data yet, apply the itinerary template
+    const hasSchedule = Object.values(data.schedule || {}).some(arr => Array.isArray(arr) && arr.length);
+    const hasFlights = data.fields && (data.fields.flight_out_num || data.fields.flight_in_num);
+    if (data.hotels.length === 0 && !hasSchedule && !hasFlights) {
+      return applyFirstTimeTemplate(data);
+    }
+  }
+
+  if (v < 3) {
+    if (!Array.isArray(data.todos)) data.todos = [];
+    if (data.todos.length === 0) {
+      data.todos = defaultTodos();
+    }
+    data._version = 3;
+  }
+
+  if (v < 4) {
+    if (!data.dogcare || typeof data.dogcare !== 'object') data.dogcare = {};
+    data._version = 4;
+  }
+
+  if (v < 5) {
+    if (!data.caregiverColors || typeof data.caregiverColors !== 'object') data.caregiverColors = {};
+    if (data.exchangeRate === undefined) data.exchangeRate = null;
+    // Add currency field to existing budget rows (default ISK)
+    if (Array.isArray(data.budget)) {
+      data.budget.forEach(b => { if (!b.currency) b.currency = 'ISK'; });
+    }
+    data._version = 5;
+  }
+
+  return data;
+}
+
+function defaultTodos() {
+  const mk = (text) => ({ id: 't' + Math.random().toString(36).slice(2, 10), text, done: false, due: '', created: Date.now() });
+  return [
+    mk('Bóka einkabifreið frá BCN flugvelli til Salou (21.05)'),
+    mk('Bóka lest 26.05 Salou-Port Aventura → Tarragona → Passeig de Gràcia'),
+    mk('Staðfesta barnapössun með ömmum/öfum og nágrönnum'),
+    mk('Athuga gildistíma vegabréfa (þurfa að vera gild í 6+ mánuði)'),
+    mk('Kaupa ferðatryggingu'),
+    mk('Taka út evrur og athuga að kreditkort virki erlendis'),
+    mk('Hlaða niður TMB app (metró í Barcelona)'),
+    mk('Hlaða niður Google Maps offline fyrir Barcelona + Salou'),
+    mk('Athuga roaming / data plan hjá símafyrirtækinu'),
+    mk('Pakka ferðatösku')
+  ];
+}
+
+function applyFirstTimeTemplate(data) {
+  // Pre-fill the user's actual itinerary on first load
+  data.hotels = [
+    {
+      name: 'Golden Port Salou & Spa',
+      address: 'Golden Port Salou & Spa, Salou',
+      checkin: '2026-05-21',
+      checkout: '2026-05-26',
+      ref: '',
+      phone: '',
+      notes: '5 nætur · 700 EUR · Gjafabréf + punktar',
+      coords: null
+    },
+    {
+      name: 'H10 Universitat',
+      address: 'Ronda Universitat 21, Barcelona',
+      checkin: '2026-05-26',
+      checkout: '2026-05-28',
+      ref: '',
+      phone: '',
+      notes: '2 nætur · 5 mín gangur frá Passeig de Gràcia · max €400 fyrir tvo',
+      coords: null
+    }
+  ];
+
+  data.fields.flight_out_num = 'FI596';
+  data.fields.flight_out_airline = 'Icelandair · Saga Premium';
+  data.fields.flight_out_arrive = '14:45';
+  data.fields.flight_in_num = 'FI597';
+  data.fields.flight_in_airline = 'Icelandair · Economy';
+  data.fields.flight_in_depart = '15:45';
+  data.fields.flight_in_arrive = '18:20';
+
+  // Pre-fill known schedule entries
+  data.schedule['2026-05-21'] = [
+    { time: '14:45', type: 'transport', title: 'Lending FI596 (KEF → BCN)', address: 'Aeroport de Barcelona-El Prat', booking: '', notes: '', coords: null, walkingKm: null, walkingMin: null },
+    { time: '15:30', type: 'transport', title: 'Einkabifreið til Salou', address: '', booking: '', notes: '~€60/mann · ~1,5 klst akstur', coords: null, walkingKm: null, walkingMin: null }
+  ];
+  data.schedule['2026-05-26'] = [
+    { time: '12:00', type: 'transport', title: 'Lest Salou → Barcelona', address: 'Salou-Port Aventura estación', booking: '', notes: 'Skipta um lest í Tarragona · Passeig de Gràcia · ~€15/mann · ~1,5 klst', coords: null, walkingKm: null, walkingMin: null }
+  ];
+  data.schedule['2026-05-27'] = [
+    { time: '', type: 'shop', title: 'Louis Vuitton', address: 'Passeig de Gràcia 71, Barcelona', booking: '', notes: '10 mín gangur frá hótelinu · Tax refund ~13% · hafa vegabréf meðferðis', coords: null, walkingKm: null, walkingMin: null }
+  ];
+  data.schedule['2026-05-28'] = [
+    { time: '15:45', type: 'transport', title: 'Brottför FI597 (BCN → KEF)', address: 'Aeroport de Barcelona-El Prat', booking: '', notes: 'Lending í KEF kl. 18:20', coords: null, walkingKm: null, walkingMin: null }
+  ];
+
+  // Budget adjustments based on itinerary
+  const b = data.budget;
+  const byCat = (name) => b.find(r => r.cat === name);
+  if (byCat('Flug')) { byCat('Flug').desc = 'Gjafabréf + punktar'; byCat('Flug').planned = 0; }
+  if (byCat('Hótel')) { byCat('Hótel').desc = 'Salou (€700) + BCN (€400)'; byCat('Hótel').planned = 155000; byCat('Hótel').actual = 0; }
+  if (byCat('Samgöngur')) { byCat('Samgöngur').desc = 'Bíll til Salou (€120) + lest (€30) + metró'; byCat('Samgöngur').planned = 25000; }
+  b.push({ cat: 'LV Passeig de Gràcia', desc: 'Tax refund ~13%', planned: 0, actual: 0, paid: false });
+
+  return data;
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panelId = btn.dataset.panel;
+    document.getElementById(panelId).classList.add('active');
+    // Leaflet maps measure 0 when their parent is display:none.
+    // When switching to the schedule tab, invalidate any existing maps and
+    // trigger init for newly-visible ones.
+    if (panelId === 'schedule') {
+      setTimeout(() => {
+        document.querySelectorAll('#schedule-days .day-map').forEach(el => {
+          if (el._map) el._map.invalidateSize();
+          else if (el._mapArgs && !el._mapInit) {
+            el._mapInit = true;
+            initMiniMap(el, el._mapArgs.activities, el._mapArgs.hotel);
+          }
+        });
+      }, 60);
+    }
+  });
+});
+
+/* ---------- Countdown ---------- */
+function updateCountdown() {
+  const now = new Date();
+  const diff = Math.ceil((TRIP_START - now) / (1000*60*60*24));
+  const el = document.getElementById('countdown');
+  if (diff > 0) el.textContent = `${diff} dagar eftir ✨`;
+  else if (diff === 0) el.textContent = `Brottfarardagur! 🎉`;
+  else if (diff >= -7) el.textContent = `Í Barcelona núna 🌴`;
+  else el.textContent = `Ferðin er búin 💫`;
+}
+
+/* ---------- Geocoding (Nominatim) ---------- */
+let lastGeocode = 0;
+async function geocode(address) {
+  if (!address || !address.trim()) return null;
+  const key = address.trim().toLowerCase();
+  if (DATA.geocodeCache[key]) return DATA.geocodeCache[key];
+
+  // Throttle to 1 req/sec per Nominatim policy
+  const now = Date.now();
+  const wait = Math.max(0, 1100 - (now - lastGeocode));
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastGeocode = Date.now();
+
+  try {
+    const query = encodeURIComponent(address);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.length) return null;
+    const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    DATA.geocodeCache[key] = coords;
+    save();
+    return coords;
+  } catch(e) {
+    console.warn('Geocode failed', e);
+    return null;
+  }
+}
+
+async function searchPlaces(query) {
+  if (!query || query.trim().length < 3) return [];
+  // throttle
+  const now = Date.now();
+  const wait = Math.max(0, 1100 - (now - lastGeocode));
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastGeocode = Date.now();
+  try {
+    // Worldwide search. Viewbox covers Catalonia (Barcelona + Salou) to bias
+    // ranking toward the travel region without restricting results.
+    const q = encodeURIComponent(query);
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=6&addressdetails=1&viewbox=0.8,41.6,2.4,40.9`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map(r => {
+      // Prefer explicit name, fall back to first component of display_name
+      const name = r.name || r.namedetails?.name || r.display_name.split(',')[0].trim();
+      // Short address: drop the name part if it matches, and drop country suffix
+      let addr = r.display_name;
+      if (name && addr.startsWith(name + ',')) addr = addr.slice(name.length + 1).trim();
+      return {
+        name,
+        shortAddr: addr,
+        fullAddr: r.display_name,
+        lat: parseFloat(r.lat),
+        lng: parseFloat(r.lon),
+        type: r.type
+      };
+    });
+  } catch(e) {
+    console.warn('Place search failed', e);
+    return [];
+  }
+}
+
+/* Reusable place-search dropdown bound to a text input.
+   `wrap` must be a positioned (relative) container. `onPick(result)` fires
+   when the user selects a suggestion. */
+function attachPlaceSearch(inputEl, wrap, onPick) {
+  let timer, current = null, lastQ = '';
+  const close = () => { if (current) { current.remove(); current = null; } };
+  const draw = (state) => {
+    close();
+    const dd = document.createElement('div');
+    dd.className = 'place-dropdown';
+    if (state.loading) {
+      dd.innerHTML = `<div class="place-empty">Leita...</div>`;
+    } else if (state.error) {
+      dd.innerHTML = `<div class="place-empty">Villa við leit. Reyndu aftur.</div>`;
+    } else if (!state.results.length) {
+      dd.innerHTML = `<div class="place-empty">Engar tillögur. Skrifaðu lengri leit eða sláðu inn handvirkt.</div>`;
+    } else {
+      dd.innerHTML = `<div class="place-dropdown-header">Tillögur frá OpenStreetMap</div>`;
+      state.results.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'place-item';
+        item.innerHTML = `
+          <div class="place-name">${escapeHtml(r.name)}</div>
+          <div class="place-addr">${escapeHtml(r.shortAddr)}</div>
+        `;
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          try { onPick(r); } finally { close(); }
+        });
+        dd.appendChild(item);
+      });
+    }
+    wrap.appendChild(dd);
+    current = dd;
+  };
+  inputEl.addEventListener('input', () => {
+    const q = inputEl.value.trim();
+    clearTimeout(timer);
+    if (q.length < 3) { close(); return; }
+    if (q === lastQ) return;
+    timer = setTimeout(async () => {
+      lastQ = q;
+      draw({ loading: true, results: [] });
+      try {
+        const results = await searchPlaces(q);
+        if (document.activeElement === inputEl && inputEl.value.trim() === q) {
+          draw({ loading: false, results });
+        }
+      } catch (e) {
+        draw({ loading: false, error: true, results: [] });
+      }
+    }, 550);
+  });
+  inputEl.addEventListener('blur', () => setTimeout(close, 180));
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { close(); inputEl.blur(); }
+  });
+  return { close };
+}
+
+function haversineKm(a, b) {
+  const R = 6371;
+  const toRad = x => x * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function estimateWalk(km) {
+  // Urban walking factor ~1.25 (grid streets) at ~4.8 km/h -> 15.6 min/km after factor
+  const min = Math.max(1, Math.round(km * 1.25 * 12.5));
+  return min;
+}
+
+/* ---------- Multi-hotel helpers ---------- */
+function getActiveHotel(dayKey) {
+  if (!DATA.hotels || !DATA.hotels.length) return null;
+  // Prefer a hotel whose stay covers the date (checkin <= day < checkout)
+  for (const h of DATA.hotels) {
+    if (h.checkin && h.checkout && h.checkin <= dayKey && dayKey < h.checkout) return h;
+  }
+  // Else: latest hotel whose checkin is on or before dayKey
+  const prior = DATA.hotels
+    .filter(h => h.checkin && h.checkin <= dayKey)
+    .sort((a,b) => b.checkin.localeCompare(a.checkin));
+  if (prior.length) return prior[0];
+  // Else: earliest hotel
+  return DATA.hotels[0];
+}
+
+function shortHotelName(name) {
+  if (!name) return 'hóteli';
+  // Take first 1-2 meaningful words
+  const parts = name.replace(/&.*$/, '').trim().split(/\s+/);
+  if (parts.length <= 2) return parts.join(' ');
+  return parts.slice(0, 2).join(' ');
+}
+
+async function ensureHotelCoords(hotel) {
+  if (!hotel || !hotel.address) return null;
+  if (hotel.coords && hotel.coords._addr === hotel.address) return hotel.coords;
+  const coords = await geocode(hotel.address);
+  if (coords) {
+    hotel.coords = { ...coords, _addr: hotel.address };
+    save();
+  } else {
+    hotel.coords = null;
+  }
+  return hotel.coords;
+}
+
+async function ensureAllHotelsCoords() {
+  for (const h of (DATA.hotels || [])) {
+    await ensureHotelCoords(h);
+  }
+}
+
+/* ---------- Field binding (overview etc) ---------- */
+function bindFields() {
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    if (DATA.fields[key] !== undefined) el.value = DATA.fields[key];
+    el.addEventListener('input', () => {
+      DATA.fields[key] = el.value;
+      save();
+    });
+  });
+}
+
+/* ---------- Walking calc ---------- */
+async function computeWalkingForActivity(act, dayKey) {
+  if (!act.address || !act.address.trim()) {
+    act.coords = null; act.walkingKm = null; act.walkingMin = null; act.walkingFrom = null;
+    return;
+  }
+  const coords = await geocode(act.address);
+  if (!coords) { act.coords = null; act.walkingKm = null; act.walkingMin = null; act.walkingFrom = null; return; }
+  act.coords = coords;
+  const hotel = getActiveHotel(dayKey);
+  if (hotel && hotel.coords) {
+    const km = haversineKm(hotel.coords, coords);
+    act.walkingKm = Math.round(km * 100) / 100;
+    act.walkingMin = estimateWalk(km);
+    act.walkingFrom = hotel.name;
+  } else {
+    act.walkingKm = null; act.walkingMin = null; act.walkingFrom = null;
+  }
+}
+
+async function recomputeAllWalking() {
+  for (const dayKey of Object.keys(DATA.schedule)) {
+    const hotel = getActiveHotel(dayKey);
+    for (const act of DATA.schedule[dayKey]) {
+      if (act.address) {
+        if (!act.coords) await computeWalkingForActivity(act, dayKey);
+        else if (hotel && hotel.coords) {
+          const km = haversineKm(hotel.coords, act.coords);
+          act.walkingKm = Math.round(km * 100) / 100;
+          act.walkingMin = estimateWalk(km);
+          act.walkingFrom = hotel.name;
+        } else {
+          act.walkingKm = null; act.walkingMin = null; act.walkingFrom = null;
+        }
+      }
+    }
+  }
+  save();
+}
+
+/* ---------- Schedule rendering ---------- */
+/* ---------- Schedule: helpers ---------- */
+function parseTimeToMin(t) {
+  if (!t) return null;
+  // Accept "9", "9:00", "09:30", "9.30", "kl. 9:30", "9 am", etc.
+  const str = String(t).trim().toLowerCase()
+    .replace(/^kl\.?\s*/, '')       // strip leading "kl." / "kl "
+    .replace(/\s*(am|pm)\s*$/i, ''); // strip am/pm
+  let m = str.match(/^(\d{1,2})[:\.](\d{1,2})$/);
+  if (!m) m = str.match(/^(\d{1,2})$/);
+  if (!m) return null;
+  const h = +m[1];
+  const mi = m[2] !== undefined ? +m[2] : 0;
+  if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
+  return h * 60 + mi;
+}
+
+const SECTIONS = [
+  { id: 'morning',   icon: '🌅', label: 'Morgunn',       from: 0,        to: 12 * 60 },
+  { id: 'afternoon', icon: '🌞', label: 'Eftirmiðdagur', from: 12 * 60,  to: 17 * 60 },
+  { id: 'evening',   icon: '🌆', label: 'Kvöld',         from: 17 * 60,  to: 24 * 60 }
+];
+const UNTIMED_SECTION = { id: 'untimed', icon: '⏱️', label: 'Ótímasett' };
+
+function sectionForMin(m) {
+  if (m == null) return UNTIMED_SECTION;
+  return SECTIONS.find(s => m >= s.from && m < s.to) || UNTIMED_SECTION;
+}
+
+function transitMarkup(a, b) {
+  if (!a.coords || !b.coords) return '';
+  const km = haversineKm(a.coords, b.coords);
+  if (km < 0.12) return ''; // essentially same place
+  if (km < 2) {
+    const min = estimateWalk(km);
+    return `<div class="transit"><span class="transit-icon">🚶</span>${min} mín göngutúr</div>`;
+  }
+  if (km < 5) {
+    return `<div class="transit"><span class="transit-icon">🚇</span>~${km.toFixed(1)} km · metró eða leigubíll</div>`;
+  }
+  if (km < 20) {
+    return `<div class="transit"><span class="transit-icon">🚗</span>${km.toFixed(1)} km akstur</div>`;
+  }
+  return `<div class="transit"><span class="transit-icon">🚆</span>${Math.round(km)} km · lest eða bíll</div>`;
+}
+
+function hotelBadgeMarkup(hotel) {
+  if (!hotel) return '';
+  const short = shortHotelName(hotel.name);
+  const cityHint = /salou/i.test(hotel.name + ' ' + (hotel.address || '')) ? 'salou'
+                 : /barcelona|h10/i.test(hotel.name + ' ' + (hotel.address || '')) ? 'bcn'
+                 : '';
+  return `<span class="hotel-badge ${cityHint}" title="${escapeAttr(hotel.name)}">🏨 ${escapeHtml(short)}</span>`;
+}
+
+/* ---------- Schedule render ---------- */
+function renderSchedule() {
+  const container = document.getElementById('schedule-days');
+  container.innerHTML = '';
+  DAYS.forEach((day, dayIndex) => {
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    const hotel = getActiveHotel(day.key);
+    const theme = (DATA.dayThemes && DATA.dayThemes[day.key]) || '';
+
+    // Sort activities by parsed time (origIdx preserved for edits + stable tie-breaking)
+    const rawActs = DATA.schedule[day.key] || [];
+    const sorted = rawActs.map((a, origIdx) => ({ a, origIdx, min: parseTimeToMin(a.time) }));
+    sorted.sort((x, y) => {
+      if (x.min == null && y.min == null) return x.origIdx - y.origIdx;
+      if (x.min == null) return 1;   // untimed goes last
+      if (y.min == null) return -1;
+      if (x.min !== y.min) return x.min - y.min;
+      return x.origIdx - y.origIdx;  // stable for equal times
+    });
+
+    card.innerHTML = `
+      <div class="day-header">
+        <div class="day-title">
+          <div class="day-date">${day.date}<span class="day-num">Dagur ${dayIndex + 1} af ${DAYS.length}</span></div>
+          <div class="day-weekday">${day.weekday}</div>
+        </div>
+        <div class="day-header-meta">
+          ${hotelBadgeMarkup(hotel)}
+        </div>
+      </div>
+      <div class="day-theme-row">
+        <input class="day-theme" placeholder="Bæta við þema fyrir daginn (t.d. 'Afslöppun á strönd')" value="${escapeAttr(theme)}" data-focus-key="theme-${day.key}">
+      </div>
+      <div class="day-map" id="map-${day.key}">
+        <div class="day-map-placeholder">Kortið birtist þegar staðir eru með heimilisföng</div>
+      </div>
+      <div class="day-body"></div>
+    `;
+
+    const body = card.querySelector('.day-body');
+
+    // Flat chronological list with transit between consecutive activities
+    if (sorted.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-hint';
+      empty.style.padding = '12px 24px';
+      empty.textContent = 'Engin dagskrá enn.';
+      body.appendChild(empty);
+    } else {
+      const list = document.createElement('div');
+      list.className = 'day-section';
+      sorted.forEach((entry, i) => {
+        list.appendChild(activityRow(day.key, entry.origIdx, entry.a));
+        if (i < sorted.length - 1) {
+          const next = sorted[i + 1];
+          const transitHtml = transitMarkup(entry.a, next.a);
+          if (transitHtml) {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = transitHtml;
+            list.appendChild(wrap.firstChild);
+          }
+        }
+      });
+      body.appendChild(list);
+    }
+
+    // Add button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'day-add';
+    addBtn.textContent = '+ Bæta við viðburði';
+    addBtn.style.margin = '10px 24px 18px';
+    addBtn.style.width = 'calc(100% - 48px)';
+    body.appendChild(addBtn);
+    addBtn.addEventListener('click', () => {
+      if (!DATA.schedule[day.key]) DATA.schedule[day.key] = [];
+      DATA.schedule[day.key].push({
+        time: '', type: 'other', title: '', address: '', booking: '', notes: '',
+        coords: null, walkingKm: null, walkingMin: null
+      });
+      save();
+      renderSchedule();
+      setTimeout(() => {
+        const allTitles = document.querySelectorAll(`#schedule-days .day-card`)[dayIndex]
+          ?.querySelectorAll('.act-title');
+        if (allTitles && allTitles.length) allTitles[allTitles.length - 1].focus();
+      }, 50);
+    });
+
+    // Theme input handler
+    const themeInput = card.querySelector('.day-theme');
+    themeInput.addEventListener('input', () => {
+      if (!DATA.dayThemes) DATA.dayThemes = {};
+      DATA.dayThemes[day.key] = themeInput.value;
+      save();
+    });
+
+    container.appendChild(card);
+
+    // Init mini map (lazy via IntersectionObserver)
+    scheduleMapInit(day.key, rawActs, hotel);
+  });
+}
+
+/* ---------- Mini map ---------- */
+const _mapObserver = (typeof IntersectionObserver !== 'undefined') ? new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !e.target._mapInit) {
+      e.target._mapInit = true;
+      const { dayKey, activities, hotel } = e.target._mapArgs || {};
+      initMiniMap(e.target, activities, hotel);
+      _mapObserver.unobserve(e.target);
+    }
+  });
+}, { rootMargin: '300px' }) : null;
+
+function scheduleMapInit(dayKey, activities, hotel) {
+  const el = document.getElementById(`map-${dayKey}`);
+  if (!el) return;
+  el._mapArgs = { dayKey, activities, hotel };
+  if (_mapObserver) {
+    _mapObserver.observe(el);
+  } else {
+    initMiniMap(el, activities, hotel);
+  }
+}
+
+function initMiniMap(el, activities, hotel) {
+  if (typeof L === 'undefined') return; // Leaflet not loaded
+  const pins = [];
+  (activities || []).forEach(a => {
+    if (a.coords) pins.push({ lat: a.coords.lat, lng: a.coords.lng, title: a.title || '(ónafnað)', type: a.type, isHotel: false });
+  });
+  if (hotel && hotel.coords) {
+    pins.push({ lat: hotel.coords.lat, lng: hotel.coords.lng, title: '🏨 ' + hotel.name, isHotel: true });
+  }
+  if (!pins.length) return; // Keep placeholder visible
+
+  // Remove placeholder
+  const placeholder = el.querySelector('.day-map-placeholder');
+  if (placeholder) placeholder.remove();
+
+  const map = L.map(el, {
+    scrollWheelZoom: false,
+    zoomControl: pins.length > 1,
+    attributionControl: true
+  });
+  el._map = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OSM'
+  }).addTo(map);
+
+  pins.forEach(p => {
+    const t = p.isHotel ? null : ACTIVITY_TYPES.find(x => x.id === p.type);
+    const icon = L.divIcon({
+      html: p.isHotel ? '🏨' : (t ? t.icon : '📍'),
+      className: p.isHotel ? 'map-pin hotel' : 'map-pin',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    L.marker([p.lat, p.lng], { icon }).bindTooltip(p.title).addTo(map);
+  });
+
+  if (pins.length === 1) {
+    map.setView([pins[0].lat, pins[0].lng], 15);
+  } else {
+    const bounds = L.latLngBounds(pins.map(p => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [24, 24] });
+  }
+}
+
+function mapsLink(address) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+function directionsLink(address, dayKey) {
+  const hotel = dayKey ? getActiveHotel(dayKey) : (DATA.hotels && DATA.hotels[0]);
+  const origin = hotel && hotel.address;
+  if (origin) {
+    return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(address)}&travelmode=walking`;
+  }
+  return mapsLink(address);
+}
+
+function activityRow(dayKey, idx, a) {
+  const row = document.createElement('div');
+  row.className = `activity t-${a.type || 'other'}`;
+  const type = getType(a.type);
+
+  const typeOptions = ACTIVITY_TYPES.map(t =>
+    `<option value="${t.id}" ${t.id === a.type ? 'selected' : ''}>${t.icon} ${t.label}</option>`
+  ).join('');
+
+  const activeHotel = getActiveHotel(dayKey);
+  const hotelShort = activeHotel ? shortHotelName(activeHotel.name) : 'hóteli';
+
+  let distanceChip = '';
+  if (a.address) {
+    if (a.walkingMin != null) {
+      if (a.walkingKm > 7) {
+        distanceChip = `<span class="meta-chip distance" title="~${a.walkingKm} km frá ${escapeAttr(a.walkingFrom || hotelShort)} (of langt til að ganga)">📍 ${a.walkingKm} km frá ${escapeHtml(shortHotelName(a.walkingFrom) || hotelShort)}</span>`;
+      } else {
+        distanceChip = `<span class="meta-chip distance" title="~${a.walkingKm} km frá ${escapeAttr(a.walkingFrom || hotelShort)}">🚶 ${a.walkingMin} mín frá ${escapeHtml(shortHotelName(a.walkingFrom) || hotelShort)}</span>`;
+      }
+    } else if (a.coords === null && activeHotel && activeHotel.address) {
+      distanceChip = `<span class="meta-chip loading">reikna vegalengd...</span>`;
+    }
+  }
+
+  const bookingChip = a.booking
+    ? `<span class="meta-chip booking">${escapeHtml(a.booking)}</span>`
+    : '';
+
+  const mapsBtn = a.address
+    ? `<a class="meta-chip" href="${mapsLink(a.address)}" target="_blank" rel="noopener">🗺️ Kort</a>
+       <a class="meta-chip" href="${directionsLink(a.address, dayKey)}" target="_blank" rel="noopener">🧭 Leið</a>`
+    : '';
+
+  const fkey = `${dayKey}-${idx}`;
+  row.innerHTML = `
+    <div class="act-time-col">
+      <input type="text" class="act-time" value="${escapeAttr(a.time)}" placeholder="kl." maxlength="5" data-focus-key="time-${fkey}">
+      <div class="act-icon" title="${type.label}">${type.icon}</div>
+    </div>
+    <div class="act-body">
+      <div class="act-top-row">
+        <div class="title-wrap">
+          <input type="text" class="act-title" value="${escapeAttr(a.title)}" placeholder="Leita að stað (alls staðar í heiminum)..." data-focus-key="title-${fkey}">
+        </div>
+        <select class="act-type-select">${typeOptions}</select>
+      </div>
+      <input type="text" class="act-address" value="${escapeAttr(a.address)}" placeholder="Heimilisfang (má velja stað að ofan)" data-focus-key="addr-${fkey}">
+      <div class="act-meta">
+        ${distanceChip}
+        ${mapsBtn}
+        ${bookingChip}
+      </div>
+      <div class="act-booking-row">
+        <input type="text" class="act-booking-input" value="${escapeAttr(a.booking)}" placeholder="Bókunarnúmer (ef á við)" data-focus-key="book-${fkey}">
+        <input type="text" class="act-notes-input act-booking-input" value="${escapeAttr(a.notes)}" placeholder="Athugasemdir" data-focus-key="notes-${fkey}">
+      </div>
+    </div>
+    <button class="act-duplicate" title="Afrita viðburð">⧉</button>
+    <button class="act-remove" title="Fjarlægja">×</button>
+  `;
+
+  const timeEl = row.querySelector('.act-time');
+  const titleEl = row.querySelector('.act-title');
+  const addrEl = row.querySelector('.act-address');
+  const typeEl = row.querySelector('.act-type-select');
+  const bookingEl = row.querySelector('.act-booking-input');
+  const notesEl = row.querySelector('.act-notes-input');
+
+  let sortTimer;
+  timeEl.addEventListener('input', () => {
+    DATA.schedule[dayKey][idx].time = timeEl.value;
+    save();
+    // Debounce re-sort while typing, with focus + cursor preservation
+    clearTimeout(sortTimer);
+    sortTimer = setTimeout(() => preserveFocus(() => renderSchedule()), 450);
+  });
+  timeEl.addEventListener('blur', () => {
+    // Immediate sort when leaving the field (don't wait for the debounce)
+    clearTimeout(sortTimer);
+    preserveFocus(() => renderSchedule());
+  });
+
+  // Title input: text entry + place search dropdown
+  const titleWrap = row.querySelector('.title-wrap');
+  let searchTimer;
+  let currentDropdown = null;
+  let lastQuery = '';
+
+  const closeDropdown = () => {
+    if (currentDropdown) { currentDropdown.remove(); currentDropdown = null; }
+  };
+
+  const renderDropdown = (state) => {
+    closeDropdown();
+    const dd = document.createElement('div');
+    dd.className = 'place-dropdown';
+    if (state.loading) {
+      dd.innerHTML = `<div class="place-empty">Leita...</div>`;
+    } else if (state.error) {
+      dd.innerHTML = `<div class="place-empty">Villa við leit. Reyndu aftur.</div>`;
+    } else if (!state.results.length) {
+      dd.innerHTML = `<div class="place-empty">Engar tillögur. Skrifaðu lengri leit eða sláðu inn handvirkt.</div>`;
+    } else {
+      dd.innerHTML = `<div class="place-dropdown-header">Tillögur frá OpenStreetMap</div>`;
+      state.results.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'place-item';
+        item.innerHTML = `
+          <div class="place-name">${escapeHtml(r.name)}</div>
+          <div class="place-addr">${escapeHtml(r.shortAddr)}</div>
+        `;
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const act = DATA.schedule[dayKey][idx];
+          act.title = r.name;
+          act.address = r.shortAddr;
+          act.coords = { lat: r.lat, lng: r.lng };
+          // Cache coords so geocode doesn't re-fetch
+          DATA.geocodeCache[r.shortAddr.toLowerCase()] = act.coords;
+          const hotel = getActiveHotel(dayKey);
+          if (hotel && hotel.coords) {
+            const km = haversineKm(hotel.coords, act.coords);
+            act.walkingKm = Math.round(km * 100) / 100;
+            act.walkingMin = estimateWalk(km);
+            act.walkingFrom = hotel.name;
+          } else {
+            act.walkingKm = null; act.walkingMin = null; act.walkingFrom = null;
+          }
+          save();
+          closeDropdown();
+          renderSchedule();
+        });
+        dd.appendChild(item);
+      });
+    }
+    titleWrap.appendChild(dd);
+    currentDropdown = dd;
+  };
+
+  titleEl.addEventListener('input', () => {
+    DATA.schedule[dayKey][idx].title = titleEl.value;
+    save();
+    const q = titleEl.value.trim();
+    clearTimeout(searchTimer);
+    if (q.length < 3) { closeDropdown(); return; }
+    if (q === lastQuery) return;
+    searchTimer = setTimeout(async () => {
+      lastQuery = q;
+      renderDropdown({ loading: true, results: [] });
+      try {
+        const results = await searchPlaces(q);
+        // Only show if this input still has focus and query still matches
+        if (document.activeElement === titleEl && titleEl.value.trim() === q) {
+          renderDropdown({ loading: false, results });
+        }
+      } catch(e) {
+        renderDropdown({ loading: false, error: true, results: [] });
+      }
+    }, 550);
+  });
+
+  titleEl.addEventListener('focus', () => {
+    if (titleEl.value.trim().length >= 3 && !currentDropdown) {
+      // Re-show last results if user refocuses (small nicety)
+    }
+  });
+
+  titleEl.addEventListener('blur', () => {
+    // Delay so mousedown on item can fire first
+    setTimeout(closeDropdown, 180);
+  });
+
+  titleEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeDropdown(); titleEl.blur(); }
+  });
+  typeEl.addEventListener('change', () => {
+    DATA.schedule[dayKey][idx].type = typeEl.value; save();
+    // Update class (for color) and icon without full re-render
+    row.className = `activity t-${typeEl.value}`;
+    const iconEl = row.querySelector('.act-icon');
+    const t = getType(typeEl.value);
+    iconEl.textContent = t.icon;
+    iconEl.title = t.label;
+  });
+  bookingEl.addEventListener('input', () => {
+    DATA.schedule[dayKey][idx].booking = bookingEl.value; save();
+    // Light update of booking chip
+    const meta = row.querySelector('.act-meta .booking');
+    if (bookingEl.value && !meta) renderSchedule();
+    else if (!bookingEl.value && meta) meta.remove();
+    else if (meta) meta.textContent = bookingEl.value;
+  });
+  notesEl.addEventListener('input', () => { DATA.schedule[dayKey][idx].notes = notesEl.value; save(); });
+
+  let addrTimer;
+  addrEl.addEventListener('input', () => {
+    DATA.schedule[dayKey][idx].address = addrEl.value;
+    // reset cached coords so it re-geocodes
+    DATA.schedule[dayKey][idx].coords = null;
+    DATA.schedule[dayKey][idx].walkingKm = null;
+    DATA.schedule[dayKey][idx].walkingMin = null;
+    save();
+    clearTimeout(addrTimer);
+    addrTimer = setTimeout(async () => {
+      await ensureAllHotelsCoords();
+      await computeWalkingForActivity(DATA.schedule[dayKey][idx], dayKey);
+      save();
+      preserveFocus(() => renderSchedule());
+    }, 1000);
+  });
+
+  row.querySelector('.act-remove').addEventListener('click', () => {
+    DATA.schedule[dayKey].splice(idx, 1);
+    save();
+    renderSchedule();
+  });
+
+  row.querySelector('.act-duplicate').addEventListener('click', () => {
+    const src = DATA.schedule[dayKey][idx];
+    // Deep copy so the duplicate has its own coords cache etc.
+    const copy = JSON.parse(JSON.stringify(src));
+    // Insert right after the original in the underlying array
+    DATA.schedule[dayKey].splice(idx + 1, 0, copy);
+    save();
+    renderSchedule();
+    toast('Viðburður afritaður');
+  });
+
+  return row;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* Preserve focus and selection across a DOM-clobbering re-render.
+   Elements must have a stable data-focus-key that survives the re-render. */
+function preserveFocus(renderFn) {
+  const active = document.activeElement;
+  const info = (active && active.dataset && active.dataset.focusKey) ? {
+    key: active.dataset.focusKey,
+    start: (typeof active.selectionStart === 'number') ? active.selectionStart : null,
+    end: (typeof active.selectionEnd === 'number') ? active.selectionEnd : null
+  } : null;
+  renderFn();
+  if (info) {
+    const el = document.querySelector(`[data-focus-key="${CSS.escape(info.key)}"]`);
+    if (el) {
+      el.focus();
+      if (info.start != null && typeof el.setSelectionRange === 'function') {
+        try { el.setSelectionRange(info.start, info.end); } catch (e) {}
+      }
+    }
+  }
+}
+
+/* ---------- Childcare ---------- */
+const CARE_CONFIGS = {
+  soley: {
+    dataKey: 'childcare',
+    daysContainerId: 'childcare-days',
+    ganttContainerId: 'gantt',
+    nightLabel: '🌙 Næturgisting',
+    dayLabel: '☀️ Dagpössun',
+    nightPlaceholder: 'Nafn + staður',
+    dayPlaceholder: 'Nafn + tími',
+    notesPlaceholder: 'Æfingar, skóli, sérstakar óskir...'
+  },
+  mia: {
+    dataKey: 'dogcare',
+    daysContainerId: 'dogcare-days',
+    ganttContainerId: 'gantt-mia',
+    nightLabel: '🐕 Gisting yfir nótt',
+    dayLabel: '🦴 Umsjón á daginn',
+    nightPlaceholder: 'Staður (t.d. Hundahótel / Amma)',
+    dayPlaceholder: 'Hver fer með Mía í göngu',
+    notesPlaceholder: 'Fóður, lyf, sérstakar óskir...'
+  }
+};
+
+function renderCareCards(cfgKey) {
+  const cfg = CARE_CONFIGS[cfgKey];
+  const container = document.getElementById(cfg.daysContainerId);
+  if (!container) return;
+  container.innerHTML = '';
+  DAYS.forEach(day => {
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    const data = DATA[cfg.dataKey] || {};
+    const care = data[day.key] || { night: '', day: '', notes: '' };
+    card.innerHTML = `
+      <div class="day-header">
+        <div class="day-title">
+          <div class="day-date">${day.date}</div>
+          <div class="day-weekday">${day.weekday}</div>
+        </div>
+      </div>
+      <div class="day-body">
+        <div class="care-block">
+          <div class="care-section night">
+            <label>${cfg.nightLabel}</label>
+            <input type="text" placeholder="${escapeAttr(cfg.nightPlaceholder)}" value="${escapeAttr(care.night)}" data-f="night">
+          </div>
+          <div class="care-section day">
+            <label>${cfg.dayLabel}</label>
+            <input type="text" placeholder="${escapeAttr(cfg.dayPlaceholder)}" value="${escapeAttr(care.day)}" data-f="day">
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <label>Athugasemdir</label>
+          <textarea placeholder="${escapeAttr(cfg.notesPlaceholder)}" data-f="notes">${escapeHtml(care.notes)}</textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+    card.querySelectorAll('[data-f]').forEach(inp => {
+      let t;
+      inp.addEventListener('input', () => {
+        if (!DATA[cfg.dataKey]) DATA[cfg.dataKey] = {};
+        if (!DATA[cfg.dataKey][day.key]) DATA[cfg.dataKey][day.key] = { night: '', day: '', notes: '' };
+        DATA[cfg.dataKey][day.key][inp.dataset.f] = inp.value;
+        save();
+        clearTimeout(t);
+        t = setTimeout(() => renderCareGantt(cfgKey), 250);
+      });
+    });
+  });
+}
+
+// Backwards-compat wrappers so the rest of the codebase keeps working
+function renderChildcare() { renderCareCards('soley'); }
+function renderDogcare()   { renderCareCards('mia'); }
+
+/* ---------- Packing ---------- */
+function updatePackingProgress() {
+  const all = (DATA.packing || []).flatMap(c => c.items || []);
+  const total = all.length;
+  const done = all.filter(i => i.done).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const countEl = document.getElementById('packing-count');
+  const pctEl = document.getElementById('packing-pct');
+  const fillEl = document.getElementById('packing-progress-fill');
+  if (countEl) countEl.textContent = `${done} af ${total} pakkað`;
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (fillEl) fillEl.style.width = pct + '%';
+}
+
+function renderPacking() {
+  const container = document.getElementById('packing-categories');
+  container.innerHTML = '';
+  DATA.packing.forEach((cat, ci) => {
+    const block = document.createElement('div');
+    block.className = 'packing-category card';
+    const total = cat.items.length;
+    const done = cat.items.filter(i => i.done).length;
+    block.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0;">
+          <span class="dot"></span>
+          <input type="text" value="${escapeAttr(cat.name)}" data-cat-name style="border:none; background:transparent; font-size:15px; font-weight:600; padding:0; width:auto; min-width:140px; margin:0; color: var(--ink);">
+          <span style="color: var(--muted); font-weight: 500; font-size: 12px; margin-left: 4px;">${done}/${total}</span>
+        </h3>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" data-add-item>+ atriði</button>
+          <button class="btn btn-ghost btn-sm" data-del-cat>Eyða</button>
+        </div>
+      </div>
+      <div class="pack-items"></div>
+    `;
+    const itemsBox = block.querySelector('.pack-items');
+    cat.items.forEach((it, ii) => itemsBox.appendChild(packItem(ci, ii, it)));
+    block.querySelector('[data-cat-name]').addEventListener('input', (e) => {
+      DATA.packing[ci].name = e.target.value; save();
+    });
+    block.querySelector('[data-add-item]').addEventListener('click', () => {
+      DATA.packing[ci].items.push({ text: '', done: false });
+      save(); renderPacking();
+      setTimeout(() => {
+        const items = document.querySelectorAll('.packing-category')[ci].querySelectorAll('.pack-item input[type="text"]');
+        if (items.length) items[items.length - 1].focus();
+      }, 50);
+    });
+    block.querySelector('[data-del-cat]').addEventListener('click', () => {
+      if (confirm(`Eyða flokknum "${cat.name}"?`)) {
+        DATA.packing.splice(ci, 1); save(); renderPacking();
+      }
+    });
+    container.appendChild(block);
+  });
+  updatePackingProgress();
+}
+
+function packItem(ci, ii, it) {
+  const row = document.createElement('div');
+  row.className = 'pack-item' + (it.done ? ' checked' : '');
+  row.innerHTML = `
+    <input type="checkbox" ${it.done ? 'checked' : ''}>
+    <input type="text" value="${escapeAttr(it.text)}" placeholder="Nýtt atriði">
+    <button class="remove">×</button>
+  `;
+  const [cb, txt] = row.querySelectorAll('input');
+  const rm = row.querySelector('button');
+  cb.addEventListener('change', () => {
+    DATA.packing[ci].items[ii].done = cb.checked;
+    row.classList.toggle('checked', cb.checked);
+    save();
+    renderPacking();
+  });
+  txt.addEventListener('input', () => {
+    DATA.packing[ci].items[ii].text = txt.value; save();
+  });
+  rm.addEventListener('click', () => {
+    DATA.packing[ci].items.splice(ii, 1); save(); renderPacking();
+  });
+  return row;
+}
+
+document.getElementById('add-category').addEventListener('click', () => {
+  DATA.packing.push({ name: 'Nýr flokkur', items: [] });
+  save(); renderPacking();
+});
+
+/* ---------- Budget ---------- */
+const FX_SYMBOL = { ISK: 'kr', EUR: '€' };
+function fxRate() {
+  return (DATA.exchangeRate && DATA.exchangeRate.rate) || 150; // fallback ~150 ISK/EUR
+}
+function toIsk(amount, currency) {
+  const n = Number(amount) || 0;
+  if (currency === 'EUR') return n * fxRate();
+  return n;
+}
+function fmtIsk(n) { return Math.round(n).toLocaleString('is-IS') + ' kr'; }
+function fmtEur(n) { return '€' + Number(n).toLocaleString('is-IS', { maximumFractionDigits: 0 }); }
+
+async function refreshFxRate() {
+  const cached = DATA.exchangeRate;
+  const now = Date.now();
+  // Use cached if less than 24h old
+  if (cached && cached.rate && (now - cached.fetched < 24*60*60*1000)) {
+    updateFxRateLabel();
+    return cached.rate;
+  }
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?from=EUR&to=ISK');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.rates && data.rates.ISK) {
+        DATA.exchangeRate = { rate: data.rates.ISK, fetched: now };
+        save();
+      }
+    }
+  } catch (e) { console.warn('FX fetch failed', e); }
+  updateFxRateLabel();
+  // Re-render budget so converted amounts reflect latest rate
+  if (document.getElementById('budget-rows')) {
+    renderBudget();
+  }
+  return fxRate();
+}
+
+function updateFxRateLabel() {
+  const el = document.getElementById('fx-rate');
+  if (!el) return;
+  const r = DATA.exchangeRate;
+  if (r && r.rate) {
+    const d = new Date(r.fetched);
+    const dateStr = `${d.getDate()}.${d.getMonth()+1}.`;
+    el.textContent = `· 1 € ≈ ${Math.round(r.rate).toLocaleString('is-IS')} kr (${dateStr})`;
+  } else {
+    el.textContent = `· 1 € ≈ ~${fxRate()} kr (áætlað)`;
+  }
+}
+
+function renderBudget() {
+  const tbody = document.getElementById('budget-rows');
+  tbody.innerHTML = '';
+  DATA.budget.forEach((b, i) => {
+    if (!b.currency) b.currency = 'ISK';
+    const plannedIsk = toIsk(b.planned, b.currency);
+    const actualIsk  = toIsk(b.actual,  b.currency);
+    const convPlanned = b.currency === 'EUR' && b.planned ? `<span class="amount-converted">≈ ${fmtIsk(plannedIsk)}</span>` : '';
+    const convActual  = b.currency === 'EUR' && b.actual  ? `<span class="amount-converted">≈ ${fmtIsk(actualIsk)}</span>`  : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeAttr(b.cat)}" data-f="cat"></td>
+      <td><input type="text" value="${escapeAttr(b.desc)}" data-f="desc"></td>
+      <td>
+        <select class="ccy-select" data-f="currency">
+          <option value="ISK" ${b.currency === 'ISK' ? 'selected' : ''}>ISK</option>
+          <option value="EUR" ${b.currency === 'EUR' ? 'selected' : ''}>EUR</option>
+        </select>
+      </td>
+      <td style="text-align:right;">
+        <input type="number" value="${b.planned}" data-f="planned" style="text-align:right;">
+        ${convPlanned}
+      </td>
+      <td style="text-align:right;">
+        <input type="number" value="${b.actual}" data-f="actual" style="text-align:right;">
+        ${convActual}
+      </td>
+      <td style="text-align:center;"><input type="checkbox" ${b.paid ? 'checked' : ''} data-f="paid" style="width:18px; height:18px; accent-color: var(--sunset);"></td>
+      <td><button class="remove" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px;">×</button></td>
+    `;
+    tr.querySelectorAll('[data-f]').forEach(inp => {
+      const f = inp.dataset.f;
+      const evName = (inp.tagName === 'SELECT' || inp.type === 'checkbox') ? 'change' : 'input';
+      inp.addEventListener(evName, () => {
+        if (f === 'paid') DATA.budget[i][f] = inp.checked;
+        else if (f === 'planned' || f === 'actual') DATA.budget[i][f] = Number(inp.value) || 0;
+        else DATA.budget[i][f] = inp.value;
+        save();
+        if (f === 'currency' || f === 'planned' || f === 'actual') {
+          renderBudget();
+        } else {
+          updateTotals();
+        }
+      });
+    });
+    tr.querySelector('.remove').addEventListener('click', () => {
+      DATA.budget.splice(i, 1); save(); renderBudget();
+    });
+    tbody.appendChild(tr);
+  });
+  updateTotals();
+  updateFxRateLabel();
+}
+
+function updateTotals() {
+  const planned = DATA.budget.reduce((s, b) => s + toIsk(b.planned, b.currency), 0);
+  const actual  = DATA.budget.reduce((s, b) => s + toIsk(b.actual,  b.currency), 0);
+  const paid    = DATA.budget.reduce((s, b) => {
+    if (!b.paid) return s;
+    return s + (toIsk(b.actual, b.currency) || toIsk(b.planned, b.currency));
+  }, 0);
+  document.getElementById('total-planned').textContent = fmtIsk(planned);
+  document.getElementById('total-actual').textContent  = fmtIsk(actual);
+  document.getElementById('total-paid').textContent    = fmtIsk(paid);
+}
+
+document.getElementById('add-budget').addEventListener('click', () => {
+  DATA.budget.push({ cat: '', desc: '', currency: 'ISK', planned: 0, actual: 0, paid: false });
+  save(); renderBudget();
+});
+
+/* ---------- Export / Import ---------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `barcelona-2026-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Afrit flutt út 📥');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      DATA = JSON.parse(ev.target.result);
+      save();
+      initAll();
+      toast('Afrit flutt inn 📤');
+    } catch (err) {
+      alert('Villa: Skrá ólæsileg.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- Hotels UI ---------- */
+function countNights(ci, co) {
+  if (!ci || !co) return null;
+  const a = new Date(ci), b = new Date(co);
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.max(0, Math.round((b - a) / (1000*60*60*24)));
+}
+
+function renderHotels() {
+  const container = document.getElementById('hotels-container');
+  if (!container) return;
+  container.innerHTML = '';
+  (DATA.hotels || []).forEach((h, i) => {
+    const nights = countNights(h.checkin, h.checkout);
+    const card = document.createElement('div');
+    card.className = 'hotel-card';
+    card.innerHTML = `
+      <div class="hotel-head">
+        <div>
+          <div class="hotel-num">Hótel ${i + 1}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          ${nights != null ? `<span class="hotel-nights">${nights} ${nights === 1 ? 'nótt' : 'nætur'}</span>` : ''}
+          <button class="hotel-delete" title="Eyða hóteli">×</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label>Nafn</label>
+          <input type="text" data-h="name" value="${escapeAttr(h.name)}">
+        </div>
+        <div>
+          <label>Sími</label>
+          <input type="text" data-h="phone" value="${escapeAttr(h.phone)}">
+        </div>
+        <div class="full">
+          <label>Heimilisfang <span class="geo-status" style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; color:var(--muted); margin-left:6px;"></span></label>
+          <div class="title-wrap" style="position: relative;">
+            <input type="text" data-h="address" value="${escapeAttr(h.address)}" placeholder="Leita að hóteli eða skrifa heimilisfang...">
+          </div>
+        </div>
+        <div>
+          <label>Check-in</label>
+          <input type="date" data-h="checkin" value="${escapeAttr(h.checkin)}" min="2026-05-21" max="2026-05-28">
+        </div>
+        <div>
+          <label>Check-out</label>
+          <input type="date" data-h="checkout" value="${escapeAttr(h.checkout)}" min="2026-05-21" max="2026-05-28">
+        </div>
+        <div>
+          <label>Bókunarnúmer</label>
+          <input type="text" data-h="ref" value="${escapeAttr(h.ref)}">
+        </div>
+        <div></div>
+        <div class="full">
+          <label>Athugasemdir</label>
+          <textarea data-h="notes">${escapeHtml(h.notes)}</textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+
+    card.querySelectorAll('[data-h]').forEach(inp => {
+      const field = inp.dataset.h;
+      inp.addEventListener('input', async () => {
+        DATA.hotels[i][field] = inp.value;
+        // invalidate coords if address changed
+        if (field === 'address') DATA.hotels[i].coords = null;
+        save();
+        if (field === 'address') {
+          const status = card.querySelector('.geo-status');
+          if (status) status.textContent = '· leita að staðsetningu...';
+          clearTimeout(inp._t);
+          inp._t = setTimeout(async () => {
+            const coords = await ensureHotelCoords(DATA.hotels[i]);
+            if (status) status.textContent = coords ? '· staðsetning fundin ✓' : '· staðsetning ekki fundin';
+            await recomputeAllWalking();
+            renderSchedule();
+          }, 1000);
+        }
+        if (field === 'checkin' || field === 'checkout') {
+          // Update nights badge + recalc who owns which day
+          const n = countNights(DATA.hotels[i].checkin, DATA.hotels[i].checkout);
+          const badge = card.querySelector('.hotel-nights');
+          if (badge && n != null) badge.textContent = `${n} ${n === 1 ? 'nótt' : 'nætur'}`;
+          await recomputeAllWalking();
+          renderSchedule();
+        }
+      });
+    });
+
+    card.querySelector('.hotel-delete').addEventListener('click', () => {
+      if (confirm(`Eyða "${h.name || 'þessu hóteli'}"?`)) {
+        DATA.hotels.splice(i, 1);
+        save();
+        renderHotels();
+        recomputeAllWalking().then(() => renderSchedule());
+      }
+    });
+
+    // Attach place search to the address field (same autocomplete as schedule)
+    const addrInput = card.querySelector('input[data-h="address"]');
+    const addrWrap = addrInput.parentElement; // .title-wrap
+    attachPlaceSearch(addrInput, addrWrap, async (r) => {
+      DATA.hotels[i].name = DATA.hotels[i].name || r.name; // only fill if empty
+      DATA.hotels[i].address = r.shortAddr;
+      DATA.hotels[i].coords = { lat: r.lat, lng: r.lng, _addr: r.shortAddr };
+      DATA.geocodeCache[r.shortAddr.toLowerCase()] = { lat: r.lat, lng: r.lng };
+      save();
+      renderHotels();
+      await recomputeAllWalking();
+      renderSchedule();
+    });
+  });
+}
+
+document.getElementById('add-hotel').addEventListener('click', () => {
+  DATA.hotels = DATA.hotels || [];
+  DATA.hotels.push({
+    name: '', address: '', checkin: '', checkout: '',
+    ref: '', phone: '', notes: '', coords: null
+  });
+  save();
+  renderHotels();
+});
+
+/* ---------- Gantt ---------- */
+const WEEKDAYS_SHORT = ['Sun', 'Mán', 'Þri', 'Mið', 'Fim', 'Fös', 'Lau'];
+const GANTT_PALETTE = ['#a78bda', '#e9c46a', '#f4a68a', '#6fb3a8', '#ce87b7', '#8ca1d8', '#d39c5c', '#7ba86c'];
+
+// Stable per-caregiver color: once a person is assigned a palette slot, they keep it.
+// Stored in DATA.caregiverColors keyed by lowercased name.
+function getCaregiverColor(name) {
+  if (!name) return 'transparent';
+  const key = name.trim().toLowerCase();
+  if (!key) return 'transparent';
+  if (!DATA.caregiverColors) DATA.caregiverColors = {};
+  if (!(key in DATA.caregiverColors)) {
+    const used = new Set(Object.values(DATA.caregiverColors));
+    let next = 0;
+    while (used.has(next) && next < GANTT_PALETTE.length * 3) next++;
+    DATA.caregiverColors[key] = next;
+    save();
+  }
+  return GANTT_PALETTE[DATA.caregiverColors[key] % GANTT_PALETTE.length];
+}
+
+function renderCareGantt(cfgKey) {
+  const cfg = CARE_CONFIGS[cfgKey];
+  const container = document.getElementById(cfg.ganttContainerId);
+  if (!container) return;
+  const dataObj = DATA[cfg.dataKey] || {};
+
+  // Collect unique names (day + night)
+  const names = [];
+  const seen = new Set();
+  DAYS.forEach(day => {
+    const c = dataObj[day.key];
+    [c?.day, c?.night].forEach(n => {
+      if (n && n.trim() && !seen.has(n.trim().toLowerCase())) {
+        seen.add(n.trim().toLowerCase());
+        names.push(n.trim());
+      }
+    });
+  });
+
+  const emptyText = cfgKey === 'mia'
+    ? 'Skráðu hvar Mía er á kortunum að neðan — yfirlitið birtist hér sjálfkrafa.'
+    : 'Skráðu passara á kortunum að neðan — yfirlitið birtist hér sjálfkrafa.';
+
+  if (!names.length) {
+    container.innerHTML = `<div class="gantt-empty">${emptyText}</div>`;
+    return;
+  }
+
+  const colorFor = name => getCaregiverColor(name);
+
+  const dateObj = k => new Date(k);
+  const weekdayShort = k => WEEKDAYS_SHORT[dateObj(k).getDay()];
+  const dayNum = k => dateObj(k).getDate();
+
+  const dayRowLabel = cfgKey === 'mia' ? '🦴 Dagur' : '☀️ Dagur';
+  const nightRowLabel = cfgKey === 'mia' ? '🐕 Nótt' : '🌙 Nótt';
+
+  let html = `<div class="gantt">`;
+  html += `<div class="g-cell g-header"></div>`;
+  DAYS.forEach(d => {
+    html += `<div class="g-cell g-header"><div class="g-date">${dayNum(d.key)}</div><div class="g-wd">${weekdayShort(d.key)}</div></div>`;
+  });
+  html += `<div class="g-cell g-row-label">${dayRowLabel}</div>`;
+  DAYS.forEach(d => {
+    const name = (dataObj[d.key] && dataObj[d.key].day) || '';
+    if (name) {
+      html += `<div class="g-cell g-slot" style="background: ${colorFor(name)}" data-day="${d.key}" data-slot="day" title="${escapeAttr(name)}">${escapeHtml(name)}</div>`;
+    } else {
+      html += `<div class="g-cell g-slot empty" data-day="${d.key}" data-slot="day">+</div>`;
+    }
+  });
+  html += `<div class="g-cell g-row-label">${nightRowLabel}</div>`;
+  DAYS.forEach(d => {
+    const name = (dataObj[d.key] && dataObj[d.key].night) || '';
+    if (name) {
+      html += `<div class="g-cell g-slot" style="background: ${colorFor(name)}" data-day="${d.key}" data-slot="night" title="${escapeAttr(name)}">${escapeHtml(name)}</div>`;
+    } else {
+      html += `<div class="g-cell g-slot empty" data-day="${d.key}" data-slot="night">+</div>`;
+    }
+  });
+  html += `</div>`;
+
+  html += `<div class="gantt-legend">`;
+  names.forEach(n => {
+    html += `<span class="legend-item"><span class="legend-swatch" style="background:${colorFor(n)}"></span>${escapeHtml(n)}</span>`;
+  });
+  html += `</div>`;
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.g-slot').forEach(el => {
+    el.addEventListener('click', () => {
+      const day = el.dataset.day;
+      const slot = el.dataset.slot;
+      const current = (dataObj[day] && dataObj[day][slot]) || '';
+
+      // Inline edit: swap cell contents for an input, datalist with existing names
+      if (el.querySelector('input')) return; // already editing
+      el.classList.add('g-slot-edit');
+      const listId = `g-datalist-${cfgKey}`;
+      let datalist = document.getElementById(listId);
+      if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = listId;
+        document.body.appendChild(datalist);
+      }
+      datalist.innerHTML = names.map(n => `<option value="${escapeAttr(n)}">`).join('');
+
+      const placeholderText = cfgKey === 'mia'
+        ? (slot === 'day' ? 'Hver/hvar' : 'Gisting')
+        : (slot === 'day' ? 'Passari' : 'Hjá');
+
+      const originalHtml = el.innerHTML;
+      el.innerHTML = `<input type="text" list="${listId}" value="${escapeAttr(current)}" placeholder="${placeholderText}">`;
+      const input = el.querySelector('input');
+      input.focus();
+      input.select();
+
+      let done = false;
+      const commit = () => {
+        if (done) return;
+        done = true;
+        const val = input.value.trim();
+        if (!DATA[cfg.dataKey]) DATA[cfg.dataKey] = {};
+        if (!DATA[cfg.dataKey][day]) DATA[cfg.dataKey][day] = { day: '', night: '', notes: '' };
+        DATA[cfg.dataKey][day][slot] = val;
+        save();
+        el.classList.remove('g-slot-edit');
+        renderCareGantt(cfgKey);
+        renderCareCards(cfgKey);
+      };
+      const cancel = () => {
+        if (done) return;
+        done = true;
+        el.innerHTML = originalHtml;
+        el.classList.remove('g-slot-edit');
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+    });
+  });
+}
+
+// Backwards-compat wrapper
+function renderGantt() { renderCareGantt('soley'); }
+
+/* ---------- Todos ---------- */
+function todoDueClass(due) {
+  if (!due) return 'unset';
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const d = new Date(due);
+  if (isNaN(d)) return '';
+  const diff = Math.round((d - today) / (1000*60*60*24));
+  if (diff < 0) return 'overdue';
+  if (diff <= 7) return 'soon';
+  return '';
+}
+
+function todoDueLabel(due) {
+  if (!due) return '📅';
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const d = new Date(due);
+  if (isNaN(d)) return '📅';
+  const diff = Math.round((d - today) / (1000*60*60*24));
+  const [y, m, dd] = due.split('-');
+  const short = `${+dd}. ${['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'][+m - 1]}`;
+  if (diff < 0) return `${short} · ${-diff}d yfir`;
+  if (diff === 0) return `${short} · í dag`;
+  if (diff === 1) return `${short} · á morgun`;
+  if (diff <= 7) return `${short} · ${diff}d eftir`;
+  return short;
+}
+
+function renderTodos() {
+  const container = document.getElementById('todos-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const todos = DATA.todos || [];
+  // Partition
+  const pending = todos.filter(t => !t.done);
+  const done = todos.filter(t => t.done);
+
+  // Sort pending: due date ascending (undue last), then created
+  pending.sort((a, b) => {
+    const da = a.due ? new Date(a.due) : null;
+    const db = b.due ? new Date(b.due) : null;
+    if (da && db) return da - db;
+    if (da) return -1;
+    if (db) return 1;
+    return (a.created || 0) - (b.created || 0);
+  });
+  // Sort done by most recently completed at top
+  done.sort((a, b) => (b.completed || 0) - (a.completed || 0));
+
+  if (pending.length) {
+    pending.forEach(t => container.appendChild(todoRow(t)));
+  } else if (todos.length) {
+    const allDone = document.createElement('div');
+    allDone.className = 'empty-hint';
+    allDone.style.cssText = 'padding: 18px; text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-sm);';
+    allDone.textContent = '🎉 Allt er klárað! Þú getur bætt við fleiri verkefnum hér að neðan.';
+    container.appendChild(allDone);
+  }
+
+  if (done.length) {
+    const divider = document.createElement('div');
+    divider.className = 'todos-divider';
+    divider.textContent = `Klárað (${done.length})`;
+    container.appendChild(divider);
+    done.forEach(t => container.appendChild(todoRow(t)));
+  }
+
+  updateTodoProgress();
+}
+
+function todoRow(t) {
+  const row = document.createElement('div');
+  row.className = 'todo-item' + (t.done ? ' done' : '');
+  const dueClass = todoDueClass(t.due);
+  row.innerHTML = `
+    <input type="checkbox" class="todo-check" ${t.done ? 'checked' : ''}>
+    <input type="text" class="todo-text" value="${escapeAttr(t.text)}">
+    <button class="todo-due ${dueClass}" data-action="edit-due">${todoDueLabel(t.due)}</button>
+    <button class="todo-remove" title="Fjarlægja">×</button>
+  `;
+
+  const cb = row.querySelector('.todo-check');
+  const txt = row.querySelector('.todo-text');
+  const dueBtn = row.querySelector('.todo-due');
+  const rm = row.querySelector('.todo-remove');
+
+  cb.addEventListener('change', () => {
+    t.done = cb.checked;
+    t.completed = cb.checked ? Date.now() : null;
+    save();
+    renderTodos();
+  });
+
+  txt.addEventListener('input', () => { t.text = txt.value; save(); });
+
+  dueBtn.addEventListener('click', () => {
+    // Replace button with date input
+    const inp = document.createElement('input');
+    inp.type = 'date';
+    inp.value = t.due || '';
+    inp.className = 'todo-due-input';
+    inp.min = '2026-01-01';
+    dueBtn.replaceWith(inp);
+    inp.focus();
+    try { inp.showPicker && inp.showPicker(); } catch(e) {}
+    const commit = () => {
+      t.due = inp.value;
+      save();
+      renderTodos();
+    };
+    inp.addEventListener('change', commit);
+    inp.addEventListener('blur', commit);
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') renderTodos();
+    });
+  });
+
+  rm.addEventListener('click', () => {
+    const i = DATA.todos.indexOf(t);
+    if (i >= 0) DATA.todos.splice(i, 1);
+    save();
+    renderTodos();
+  });
+
+  return row;
+}
+
+function updateTodoProgress() {
+  const total = (DATA.todos || []).length;
+  const done = (DATA.todos || []).filter(t => t.done).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('todo-count').textContent = `${done} af ${total} klárað`;
+  document.getElementById('todo-pct').textContent = pct + '%';
+  document.getElementById('todo-progress-fill').style.width = pct + '%';
+}
+
+function addTodo(text) {
+  text = (text || '').trim();
+  if (!text) return;
+  DATA.todos = DATA.todos || [];
+  DATA.todos.push({
+    id: 't' + Math.random().toString(36).slice(2, 10),
+    text, done: false, due: '', created: Date.now()
+  });
+  save();
+  renderTodos();
+}
+
+document.getElementById('todo-add-btn').addEventListener('click', () => {
+  const input = document.getElementById('todo-input');
+  addTodo(input.value);
+  input.value = '';
+  input.focus();
+});
+document.getElementById('todo-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    addTodo(e.target.value);
+    e.target.value = '';
+  }
+});
+
+/* ---------- Weather ---------- */
+const WMO_ICONS = {
+  0: '☀️',
+  1: '🌤️', 2: '⛅', 3: '☁️',
+  45: '🌫️', 48: '🌫️',
+  51: '🌦️', 53: '🌦️', 55: '🌦️',
+  56: '🌧️', 57: '🌧️',
+  61: '🌧️', 63: '🌧️', 65: '🌧️',
+  66: '🌧️', 67: '🌧️',
+  71: '🌨️', 73: '🌨️', 75: '🌨️', 77: '🌨️',
+  80: '🌦️', 81: '🌧️', 82: '⛈️',
+  85: '🌨️', 86: '🌨️',
+  95: '⛈️', 96: '⛈️', 99: '⛈️'
+};
+
+function climatologyHTML() {
+  // Barcelona / Salou climate normals for May (Mediterranean coast)
+  return `
+    <div class="weather-climatology">
+      <div class="weather-stat"><span class="val">22°C</span><span class="lbl">Meðal dagur</span></div>
+      <div class="weather-stat"><span class="val">14°C</span><span class="lbl">Meðal nótt</span></div>
+      <div class="weather-stat"><span class="val">~8 klst</span><span class="lbl">Sól á dag</span></div>
+      <div class="weather-stat"><span class="val">~5</span><span class="lbl">Skúradagar í maí</span></div>
+      <div class="weather-stat"><span class="val">17°C</span><span class="lbl">Sjávarhiti</span></div>
+    </div>
+  `;
+}
+
+async function renderWeather() {
+  const body = document.getElementById('weather-body');
+  const status = document.getElementById('weather-status');
+  if (!body) return;
+
+  // Always show climatology first
+  body.innerHTML = climatologyHTML();
+  if (status) status.textContent = 'Sögulegt meðaltal · maí';
+
+  // Try live forecast if we're within the 16-day window
+  const now = new Date();
+  const daysTo = Math.ceil((TRIP_START - now) / (1000*60*60*24));
+  if (daysTo > 16) return;
+
+  try {
+    // Average Barcelona/Salou: Barcelona 41.38/2.17, Salou 41.07/1.13 — use midpoint
+    const lat = 41.22, lng = 1.65;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&start_date=2026-05-21&end_date=2026-05-28`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.daily || !data.daily.time || !data.daily.time.length) return;
+
+    const fc = data.daily.time.map((date, i) => ({
+      date,
+      hi: Math.round(data.daily.temperature_2m_max[i]),
+      lo: Math.round(data.daily.temperature_2m_min[i]),
+      code: data.daily.weathercode[i]
+    }));
+
+    const forecastHTML = fc.map(d => {
+      const day = new Date(d.date);
+      const dayNum = day.getDate();
+      const wd = WEEKDAYS_SHORT[day.getDay()];
+      const icon = WMO_ICONS[d.code] || '🌡️';
+      return `
+        <div class="weather-day">
+          <div class="wd-date">${dayNum} · ${wd}</div>
+          <div class="wd-icon">${icon}</div>
+          <div class="wd-temp">${d.hi}° <span class="wd-temp-lo">/ ${d.lo}°</span></div>
+        </div>
+      `;
+    }).join('');
+
+    body.innerHTML = `
+      ${climatologyHTML()}
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.6);">
+        <div style="font-size: 10px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 700; margin-bottom: 10px; opacity: 0.75;">Spá fyrir ferðadagana</div>
+        <div class="weather-forecast">${forecastHTML}</div>
+      </div>
+    `;
+    if (status) status.textContent = 'Spá · open-meteo';
+  } catch(e) {
+    console.warn('Weather forecast fetch failed', e);
+  }
+}
+
+/* ---------- Print ---------- */
+document.getElementById('print-schedule').addEventListener('click', () => {
+  // Temporarily switch to schedule tab so print CSS has the correct panel rendered
+  const current = document.querySelector('.tab.active');
+  const scheduleTab = document.querySelector('.tab[data-panel="schedule"]');
+  if (scheduleTab && current !== scheduleTab) scheduleTab.click();
+  setTimeout(() => window.print(), 150);
+});
+
+function initAll() {
+  bindFields();
+  renderHotels();
+  renderSchedule();
+  renderCareCards('soley');
+  renderCareGantt('soley');
+  renderCareCards('mia');
+  renderCareGantt('mia');
+  renderPacking();
+  renderBudget();
+  renderTodos();
+  renderWeather();
+  refreshFxRate();
+  // Geocode hotels on load, then compute walking distances
+  ensureAllHotelsCoords().then(() => {
+    recomputeAllWalking().then(() => renderSchedule());
+  });
+}
+
+updateCountdown();
+setInterval(updateCountdown, 60000);
+initAll();
+</script>
+
+</body>
+</html>
