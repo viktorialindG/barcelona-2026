@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <style>
   :root {
     --bg: #f8f5fc;
@@ -1585,6 +1587,7 @@
     <div class="hero-meta">
       <span class="chip" id="countdown">…</span>
       <span class="chip accent">🌞 ~23°C · sól</span>
+      <span class="chip" id="sync-badge" style="opacity: 0.7;">☁️ tengist...</span>
     </div>
   </div>
 </header>
@@ -1829,6 +1832,105 @@
 const STORAGE_KEY = 'barcelona2026';
 const TRIP_START = new Date(2026, 4, 21);
 const TRIP_END = new Date(2026, 4, 28);
+
+/* ---------- Firebase Realtime Sync ---------- */
+const DEVICE_ID = 'dev_' + Math.random().toString(36).slice(2, 10);
+let fbRef = null;
+let _fbReady = false;
+
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyB6w4njSrBy3-Cl-T9wDe1MT2yJXqU3LNk",
+    databaseURL: "https://barcelona-2026-d29a7-default-rtdb.europe-west1.firebasedatabase.app"
+  });
+  fbRef = firebase.database().ref('trip');
+  _fbReady = true;
+} catch(e) {
+  console.warn('Firebase init failed, running offline', e);
+}
+
+function setSyncBadge(text, ok) {
+  const el = document.getElementById('sync-badge');
+  if (!el) return;
+  el.textContent = text;
+  el.style.opacity = ok ? '1' : '0.7';
+}
+
+// Debounced Firebase write
+let _fbWriteTimer = null;
+function saveToCloud() {
+  if (!fbRef || !_fbReady) return;
+  clearTimeout(_fbWriteTimer);
+  _fbWriteTimer = setTimeout(() => {
+    DATA._lastModified = Date.now();
+    DATA._modifiedBy = DEVICE_ID;
+    setSyncBadge('☁️ vistar...', false);
+    fbRef.set(DATA).then(() => {
+      setSyncBadge('☁️ samstillt ✓', true);
+    }).catch(e => {
+      console.warn('Firebase write failed', e);
+      setSyncBadge('⚠️ villa', false);
+    });
+  }, 600);
+}
+
+// Listen for remote changes (from husband's device)
+function startSyncListener() {
+  if (!fbRef || !_fbReady) {
+    setSyncBadge('📴 offline', false);
+    return;
+  }
+  fbRef.on('value', (snapshot) => {
+    if (!snapshot.exists()) {
+      // Firebase is empty: upload our local data
+      DATA._lastModified = Date.now();
+      DATA._modifiedBy = DEVICE_ID;
+      fbRef.set(DATA);
+      setSyncBadge('☁️ samstillt ✓', true);
+      return;
+    }
+    const remote = snapshot.val();
+    // Skip our own writes
+    if (remote._modifiedBy === DEVICE_ID) return;
+    // Skip if our data is newer or same age
+    if (DATA._lastModified && remote._lastModified && remote._lastModified <= DATA._lastModified) return;
+
+    // Apply remote data
+    const merged = { ...structuredClone(DEFAULT_DATA), ...remote };
+    // Migrate if needed (in case the other device has older schema)
+    const migrated = migrate(merged);
+    // Migrate schedule entries too
+    if (migrated.schedule) {
+      Object.keys(migrated.schedule).forEach(k => {
+        migrated.schedule[k] = (migrated.schedule[k] || []).map(a => ({
+          time: a.time || '',
+          type: a.type || 'other',
+          title: a.title !== undefined ? a.title : (a.text || ''),
+          address: a.address || '',
+          booking: a.booking || '',
+          notes: a.notes || '',
+          coords: a.coords || null,
+          walkingKm: a.walkingKm || null,
+          walkingMin: a.walkingMin || null
+        }));
+      });
+    }
+    DATA = migrated;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+    initAll();
+    setSyncBadge('☁️ samstillt ✓', true);
+    toast('Gögn samstillt frá öðru tæki ☁️');
+  });
+
+  // Connection state
+  firebase.database().ref('.info/connected').on('value', (snap) => {
+    if (snap.val() === true) {
+      setSyncBadge('☁️ samstillt ✓', true);
+    } else {
+      setSyncBadge('📴 offline', false);
+    }
+  });
+}
 const WEEKDAYS = ['Sun', 'Mán', 'Þri', 'Mið', 'Fim', 'Fös', 'Lau'];
 const WEEKDAYS_LONG = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
 
@@ -2075,6 +2177,7 @@ function applyFirstTimeTemplate(data) {
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  saveToCloud();
 }
 
 function toast(msg) {
@@ -3727,6 +3830,7 @@ function initAll() {
 updateCountdown();
 setInterval(updateCountdown, 60000);
 initAll();
+startSyncListener();
 </script>
 
 </body>
