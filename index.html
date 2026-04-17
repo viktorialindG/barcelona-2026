@@ -1872,68 +1872,90 @@ function saveToCloud() {
   }, 800);
 }
 
-// Listen for remote changes (from husband's device)
-function startSyncListener() {
+// Sync: two-phase startup, then real-time listener
+async function startSyncListener() {
   if (!fbRef || !_fbReady) {
     setSyncBadge('📴 offline', false);
     return;
   }
-  fbRef.on('value', (snapshot) => {
-    if (!snapshot.exists()) {
-      // Firebase is empty: upload our local data once
-      DATA._lastModified = Date.now();
-      DATA._modifiedBy = DEVICE_ID;
-      _lastLocalSave = Date.now();
-      fbRef.set(DATA);
-      setSyncBadge('☁️ samstillt ✓', true);
-      return;
-    }
-    const remote = snapshot.val();
 
-    // GUARD 1: Skip our own writes (same device)
-    if (remote._modifiedBy === DEVICE_ID) {
-      setSyncBadge('☁️ samstillt ✓', true);
-      return;
+  try {
+    // PHASE 1: One-time compare — is the cloud newer than us?
+    const snapshot = await fbRef.once('value');
+    if (snapshot.exists()) {
+      const remote = snapshot.val();
+      const remoteNewer = remote._lastModified && DATA._lastModified
+        && remote._modifiedBy !== DEVICE_ID
+        && remote._lastModified > DATA._lastModified + 2000; // 2s grace
+      if (remoteNewer) {
+        // Cloud has genuinely newer data from another device — apply it
+        DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...remote });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+        initAll();
+        toast('Nýjustu gögn sótt frá skýinu ☁️');
+      }
     }
-    // GUARD 2: Skip if we just saved locally (avoid echo/conflict during editing)
-    if (Date.now() - _lastLocalSave < 3000) return;
-    // GUARD 3: Skip if our data is newer or same age
-    if (DATA._lastModified && remote._lastModified && remote._lastModified <= DATA._lastModified) return;
 
-    // Apply remote data
-    const merged = { ...structuredClone(DEFAULT_DATA), ...remote };
-    const migrated = migrate(merged);
-    if (migrated.schedule) {
-      Object.keys(migrated.schedule).forEach(k => {
-        migrated.schedule[k] = (migrated.schedule[k] || []).map(a => ({
-          time: a.time || '',
-          type: a.type || 'other',
-          title: a.title !== undefined ? a.title : (a.text || ''),
-          address: a.address || '',
-          booking: a.booking || '',
-          notes: a.notes || '',
-          coords: a.coords || null,
-          walkingKm: a.walkingKm || null,
-          walkingMin: a.walkingMin || null
-        }));
-      });
-    }
-    DATA = migrated;
-    _lastLocalSave = Date.now(); // prevent re-trigger from our own initAll saves
+    // PHASE 2: Push OUR data to Firebase to claim ownership for this session
+    DATA._lastModified = Date.now();
+    DATA._modifiedBy = DEVICE_ID;
+    _lastLocalSave = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
-    initAll();
+    await fbRef.set(DATA);
     setSyncBadge('☁️ samstillt ✓', true);
-    toast('Gögn samstillt frá öðru tæki ☁️');
-  });
 
-  // Connection state
-  firebase.database().ref('.info/connected').on('value', (snap) => {
-    if (snap.val() === true) {
+    // PHASE 3: Now listen for FUTURE changes only (not our own echo)
+    fbRef.on('value', (snapshot) => {
+      if (!snapshot.exists()) return;
+      const remote = snapshot.val();
+      // Skip our own writes
+      if (remote._modifiedBy === DEVICE_ID) return;
+      // Skip if we saved locally in last 5 seconds
+      if (Date.now() - _lastLocalSave < 5000) return;
+      // Skip if remote is not genuinely newer (with 1s grace for clock skew)
+      if (DATA._lastModified && remote._lastModified
+          && remote._lastModified <= DATA._lastModified + 1000) return;
+
+      // Apply remote data
+      DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...remote });
+      _lastLocalSave = Date.now();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+      initAll();
       setSyncBadge('☁️ samstillt ✓', true);
-    } else {
-      setSyncBadge('📴 offline', false);
-    }
+      toast('Gögn samstillt frá öðru tæki ☁️');
+    });
+
+  } catch(e) {
+    console.warn('Sync startup failed', e);
+    setSyncBadge('⚠️ sync villa', false);
+  }
+
+  // Connection state indicator
+  firebase.database().ref('.info/connected').on('value', (snap) => {
+    if (snap.val() === true) setSyncBadge('☁️ tengt', true);
+    else setSyncBadge('📴 offline', false);
   });
+}
+
+// Shared migration + schedule cleanup for incoming data
+function migrateAndClean(data) {
+  const migrated = migrate(data);
+  if (migrated.schedule) {
+    Object.keys(migrated.schedule).forEach(k => {
+      migrated.schedule[k] = (migrated.schedule[k] || []).map(a => ({
+        time: a.time || '',
+        type: a.type || 'other',
+        title: a.title !== undefined ? a.title : (a.text || ''),
+        address: a.address || '',
+        booking: a.booking || '',
+        notes: a.notes || '',
+        coords: a.coords || null,
+        walkingKm: a.walkingKm || null,
+        walkingMin: a.walkingMin || null
+      }));
+    });
+  }
+  return migrated;
 }
 const WEEKDAYS = ['Sun', 'Mán', 'Þri', 'Mið', 'Fim', 'Fös', 'Lau'];
 const WEEKDAYS_LONG = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
