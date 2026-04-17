@@ -1856,14 +1856,12 @@ function setSyncBadge(text, ok) {
   el.style.opacity = ok ? '1' : '0.7';
 }
 
-// Debounced Firebase write
+// Debounced Firebase write (DATA already has _modifiedBy + _lastModified from save())
 let _fbWriteTimer = null;
 function saveToCloud() {
   if (!fbRef || !_fbReady) return;
   clearTimeout(_fbWriteTimer);
   _fbWriteTimer = setTimeout(() => {
-    DATA._lastModified = Date.now();
-    DATA._modifiedBy = DEVICE_ID;
     setSyncBadge('☁️ vistar...', false);
     fbRef.set(DATA).then(() => {
       setSyncBadge('☁️ samstillt ✓', true);
@@ -1871,7 +1869,7 @@ function saveToCloud() {
       console.warn('Firebase write failed', e);
       setSyncBadge('⚠️ villa', false);
     });
-  }, 600);
+  }, 800);
 }
 
 // Listen for remote changes (from husband's device)
@@ -1882,24 +1880,29 @@ function startSyncListener() {
   }
   fbRef.on('value', (snapshot) => {
     if (!snapshot.exists()) {
-      // Firebase is empty: upload our local data
+      // Firebase is empty: upload our local data once
       DATA._lastModified = Date.now();
       DATA._modifiedBy = DEVICE_ID;
+      _lastLocalSave = Date.now();
       fbRef.set(DATA);
       setSyncBadge('☁️ samstillt ✓', true);
       return;
     }
     const remote = snapshot.val();
-    // Skip our own writes
-    if (remote._modifiedBy === DEVICE_ID) return;
-    // Skip if our data is newer or same age
+
+    // GUARD 1: Skip our own writes (same device)
+    if (remote._modifiedBy === DEVICE_ID) {
+      setSyncBadge('☁️ samstillt ✓', true);
+      return;
+    }
+    // GUARD 2: Skip if we just saved locally (avoid echo/conflict during editing)
+    if (Date.now() - _lastLocalSave < 3000) return;
+    // GUARD 3: Skip if our data is newer or same age
     if (DATA._lastModified && remote._lastModified && remote._lastModified <= DATA._lastModified) return;
 
     // Apply remote data
     const merged = { ...structuredClone(DEFAULT_DATA), ...remote };
-    // Migrate if needed (in case the other device has older schema)
     const migrated = migrate(merged);
-    // Migrate schedule entries too
     if (migrated.schedule) {
       Object.keys(migrated.schedule).forEach(k => {
         migrated.schedule[k] = (migrated.schedule[k] || []).map(a => ({
@@ -1916,6 +1919,7 @@ function startSyncListener() {
       });
     }
     DATA = migrated;
+    _lastLocalSave = Date.now(); // prevent re-trigger from our own initAll saves
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
     initAll();
     setSyncBadge('☁️ samstillt ✓', true);
@@ -2175,7 +2179,11 @@ function applyFirstTimeTemplate(data) {
   return data;
 }
 
+let _lastLocalSave = 0;
 function save() {
+  _lastLocalSave = Date.now();
+  DATA._lastModified = Date.now();
+  DATA._modifiedBy = DEVICE_ID;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
   saveToCloud();
 }
