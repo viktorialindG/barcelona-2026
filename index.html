@@ -1991,10 +1991,14 @@ function setSyncBadge(text, ok) {
   el.style.opacity = ok ? '1' : '0.7';
 }
 
+// Block cloud writes until initial sync is done (prevents startup auto-saves
+// from overwriting Firebase with empty/template data).
+let _syncComplete = false;
+
 // Debounced Firebase write (DATA already has _modifiedBy + _lastModified from save())
 let _fbWriteTimer = null;
 function saveToCloud() {
-  if (!fbRef || !_fbReady) return;
+  if (!fbRef || !_fbReady || !_syncComplete) return;
   clearTimeout(_fbWriteTimer);
   _fbWriteTimer = setTimeout(() => {
     setSyncBadge('☁️ vistar...', false);
@@ -2043,6 +2047,7 @@ async function startSyncListener() {
     _lastLocalSave = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
     await fbRef.set(DATA);
+    _syncComplete = true; // NOW allow future save() calls to write to Firebase
     setSyncBadge('☁️ samstillt ✓', true);
 
     // PHASE 3: Now listen for FUTURE changes only (not our own echo)
