@@ -2019,19 +2019,25 @@ async function startSyncListener() {
     const snapshot = await fbRef.once('value');
     if (snapshot.exists()) {
       const remote = snapshot.val();
-      const remoteNewer = remote._lastModified && DATA._lastModified
+      // Use cloud data if:
+      // a) Local has no timestamp (fresh page / cleared storage) and cloud does, OR
+      // b) Cloud is genuinely newer from another device
+      const localFresh = !DATA._lastModified;
+      const cloudHasData = !!remote._lastModified;
+      const cloudNewer = cloudHasData && DATA._lastModified
         && remote._modifiedBy !== DEVICE_ID
-        && remote._lastModified > DATA._lastModified + 2000; // 2s grace
-      if (remoteNewer) {
-        // Cloud has genuinely newer data from another device — apply it
+        && remote._lastModified > DATA._lastModified + 2000;
+
+      if ((localFresh && cloudHasData) || cloudNewer) {
         DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...remote });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
         initAll();
-        toast('Nýjustu gögn sótt frá skýinu ☁️');
+        if (SHARE_MODE) applyShareMode();
+        toast('Gögn sótt frá skýinu ☁️');
       }
     }
 
-    // PHASE 2: Push OUR data to Firebase to claim ownership for this session
+    // PHASE 2: Claim ownership — push our (possibly updated) data
     DATA._lastModified = Date.now();
     DATA._modifiedBy = DEVICE_ID;
     _lastLocalSave = Date.now();
