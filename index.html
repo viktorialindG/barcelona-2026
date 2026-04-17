@@ -3220,10 +3220,18 @@ function renderBudget() {
         else if (f === 'planned' || f === 'actual') DATA.budget[i][f] = Number(inp.value) || 0;
         else DATA.budget[i][f] = inp.value;
         save();
-        if (f === 'currency' || f === 'planned' || f === 'actual') {
+        if (f === 'currency') {
+          // Currency change needs full re-render to show/hide conversion labels
           renderBudget();
         } else {
+          // For amount and text changes: just update totals, don't destroy the input
           updateTotals();
+          // Update inline conversion text if EUR
+          if ((f === 'planned' || f === 'actual') && DATA.budget[i].currency === 'EUR') {
+            const convEl = inp.parentElement.querySelector('.amount-converted');
+            const val = Number(inp.value) || 0;
+            if (convEl) convEl.textContent = val ? `≈ ${fmtIsk(val * fxRate())}` : '';
+          }
         }
       });
     });
