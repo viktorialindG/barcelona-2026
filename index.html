@@ -1596,14 +1596,6 @@
   body.share-mode header.hero { display: none; }
   body.share-mode nav.tabs { display: none; }
   body.share-mode .footer-bar { display: none; }
-  body.share-mode .no-print { display: none; }
-  body.share-mode .assignees-row { display: none; }
-  body.share-mode .todo-add { display: none; }
-  body.share-mode .day-add { display: none; }
-  body.share-mode .add-hotel-btn { display: none; }
-  body.share-mode .act-remove,
-  body.share-mode .act-duplicate,
-  body.share-mode .hotel-delete { display: none; }
 
   /* Share link buttons in panel headers */
   .share-link-btn {
@@ -2022,29 +2014,6 @@ async function startSyncListener() {
     return;
   }
 
-  // SHARE MODE: read-only — just fetch and listen, never write
-  if (SHARE_MODE) {
-    try {
-      const snapshot = await fbRef.once('value');
-      if (snapshot.exists()) {
-        DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...snapshot.val() });
-        initAll();
-        applyShareMode();
-      }
-      // Listen for live updates
-      fbRef.on('value', (snapshot) => {
-        if (!snapshot.exists()) return;
-        DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...snapshot.val() });
-        initAll();
-        applyShareMode();
-      });
-      setSyncBadge('👁️ skoðun', true);
-    } catch(e) {
-      console.warn('Share mode sync failed', e);
-    }
-    return;
-  }
-
   try {
     // PHASE 1: One-time compare — is the cloud newer than us?
     const snapshot = await fbRef.once('value');
@@ -2377,7 +2346,7 @@ function applyFirstTimeTemplate(data) {
 
 let _lastLocalSave = 0;
 function save() {
-  if (SHARE_MODE) return; // read-only in share mode
+  // Share mode is writable — changes sync via Firebase
   _lastLocalSave = Date.now();
   DATA._lastModified = Date.now();
   DATA._modifiedBy = DEVICE_ID;
@@ -4136,7 +4105,7 @@ function applyShareMode() {
     const banner = document.createElement('div');
     banner.id = 'share-banner';
     banner.className = 'share-banner';
-    banner.innerHTML = `👁️ <strong>${SHARE_MODE.title}</strong> · Barcelona ❤️ 21.–28. maí 2026 · Skoðunarhamur`;
+    banner.innerHTML = `✏️ <strong>${SHARE_MODE.title}</strong> · Barcelona ❤️ · 21.–28. maí 2026`;
     document.body.insertBefore(banner, document.body.firstChild);
   }
 
@@ -4167,9 +4136,9 @@ setInterval(updateCountdown, 60000);
 initAll();
 
 if (SHARE_MODE) {
-  // Share mode: start sync immediately (read-only, no echo risk)
+  // Share mode: show only the target tab, start sync immediately
   applyShareMode();
-  startSyncListener();
+  setTimeout(startSyncListener, 2000);
 } else {
   // Normal mode: delay sync to avoid startup echo
   setTimeout(startSyncListener, 4000);
