@@ -1583,6 +1583,43 @@
     font-style: italic;
   }
 
+  /* SHARE MODE */
+  .share-banner {
+    background: var(--night);
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .share-banner a { color: var(--gold); }
+  body.share-mode header.hero { display: none; }
+  body.share-mode nav.tabs { display: none; }
+  body.share-mode .footer-bar { display: none; }
+  body.share-mode .no-print { display: none; }
+  body.share-mode .assignees-row { display: none; }
+  body.share-mode .todo-add { display: none; }
+  body.share-mode .day-add { display: none; }
+  body.share-mode .add-hotel-btn { display: none; }
+  body.share-mode .act-remove,
+  body.share-mode .act-duplicate,
+  body.share-mode .hotel-delete { display: none; }
+
+  /* Share link buttons in panel headers */
+  .share-link-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .share-link-btn:hover { background: var(--line-2); color: var(--ink); }
+
   /* PRINT: clean, paper-friendly view of the schedule */
   @media print {
     @page { margin: 16mm 14mm; size: A4; }
@@ -1817,8 +1854,10 @@
 
   <!-- SÓLEY PÖSSUN -->
   <section class="panel" id="childcare">
-    <h2>Sóley pössun</h2>
-    <p class="section-sub">Hver passar Sóley hvenær, dag og nótt aðskilin.</p>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:8px;">
+      <div><h2 style="margin-bottom:4px;">Sóley pössun</h2><p class="section-sub" style="margin:0;">Hver passar Sóley hvenær, dag og nótt aðskilin.</p></div>
+      <button class="share-link-btn" data-share="deila-soley">🔗 Deila hlekkur</button>
+    </div>
 
     <div class="gantt-wrap">
       <div class="gantt-title">
@@ -1837,8 +1876,10 @@
 
   <!-- MÍA PÖSSUN -->
   <section class="panel" id="dogcare">
-    <h2>Mía pössun 🐕</h2>
-    <p class="section-sub">Hvar er Mía hvern dag og hver sér um hana.</p>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:8px;">
+      <div><h2 style="margin-bottom:4px;">Mía pössun 🐕</h2><p class="section-sub" style="margin:0;">Hvar er Mía hvern dag og hver sér um hana.</p></div>
+      <button class="share-link-btn" data-share="deila-mia">🔗 Deila hlekkur</button>
+    </div>
 
     <div class="gantt-wrap">
       <div class="gantt-title">
@@ -1925,6 +1966,16 @@ const STORAGE_KEY = 'barcelona2026';
 const TRIP_START = new Date(2026, 4, 21);
 const TRIP_END = new Date(2026, 4, 28);
 
+/* ---------- Share mode ---------- */
+const SHARE_MAP = {
+  'deila-soley': { panel: 'childcare', title: 'Sóley pössun' },
+  'deila-mia': { panel: 'dogcare', title: 'Mía pössun 🐕' },
+  'deila-dagskra': { panel: 'schedule', title: 'Dagskrá' },
+  'deila-todo': { panel: 'todos', title: 'ToDo' }
+};
+const SHARE_KEY = window.location.hash.replace('#', '');
+const SHARE_MODE = SHARE_MAP[SHARE_KEY] || null;
+
 /* ---------- Firebase Realtime Sync ---------- */
 const DEVICE_ID = 'dev_' + Math.random().toString(36).slice(2, 10);
 let fbRef = null;
@@ -1968,6 +2019,29 @@ function saveToCloud() {
 async function startSyncListener() {
   if (!fbRef || !_fbReady) {
     setSyncBadge('📴 offline', false);
+    return;
+  }
+
+  // SHARE MODE: read-only — just fetch and listen, never write
+  if (SHARE_MODE) {
+    try {
+      const snapshot = await fbRef.once('value');
+      if (snapshot.exists()) {
+        DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...snapshot.val() });
+        initAll();
+        applyShareMode();
+      }
+      // Listen for live updates
+      fbRef.on('value', (snapshot) => {
+        if (!snapshot.exists()) return;
+        DATA = migrateAndClean({ ...structuredClone(DEFAULT_DATA), ...snapshot.val() });
+        initAll();
+        applyShareMode();
+      });
+      setSyncBadge('👁️ skoðun', true);
+    } catch(e) {
+      console.warn('Share mode sync failed', e);
+    }
     return;
   }
 
@@ -2303,6 +2377,7 @@ function applyFirstTimeTemplate(data) {
 
 let _lastLocalSave = 0;
 function save() {
+  if (SHARE_MODE) return; // read-only in share mode
   _lastLocalSave = Date.now();
   DATA._lastModified = Date.now();
   DATA._modifiedBy = DEVICE_ID;
@@ -4051,13 +4126,54 @@ function initAll() {
   });
 }
 
+/* ---------- Share mode UI ---------- */
+function applyShareMode() {
+  if (!SHARE_MODE) return;
+  document.body.classList.add('share-mode');
+
+  // Add banner if not already there
+  if (!document.getElementById('share-banner')) {
+    const banner = document.createElement('div');
+    banner.id = 'share-banner';
+    banner.className = 'share-banner';
+    banner.innerHTML = `👁️ <strong>${SHARE_MODE.title}</strong> · Barcelona ❤️ 21.–28. maí 2026 · Skoðunarhamur`;
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  // Show only the target panel
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(SHARE_MODE.panel);
+  if (target) target.classList.add('active');
+}
+
+// Share link copy buttons
+document.querySelectorAll('[data-share]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.share;
+    const base = window.location.origin + window.location.pathname;
+    const url = base + '#' + key;
+    navigator.clipboard.writeText(url).then(() => {
+      toast('Hlekkur afritaður ✓');
+      btn.textContent = '✓ Afritað!';
+      setTimeout(() => { btn.textContent = '🔗 Deila hlekkur'; }, 2000);
+    }).catch(() => {
+      prompt('Afritaðu þennan hlekk:', url);
+    });
+  });
+});
+
 updateCountdown();
 setInterval(updateCountdown, 60000);
 initAll();
-// Delay sync listener so all initial async operations (geocoding, FX rate)
-// finish their save() calls before we start listening for remote changes.
-// This prevents the listener from treating our own startup writes as "remote".
-setTimeout(startSyncListener, 4000);
+
+if (SHARE_MODE) {
+  // Share mode: start sync immediately (read-only, no echo risk)
+  applyShareMode();
+  startSyncListener();
+} else {
+  // Normal mode: delay sync to avoid startup echo
+  setTimeout(startSyncListener, 4000);
+}
 </script>
 
 </body>
