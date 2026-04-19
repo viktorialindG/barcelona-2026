@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barcelona ❤️</title>
+<title>Ferðaplani</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
@@ -1781,11 +1781,18 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <div class="hero-kicker">Paraferð · 21. til 28. maí 2026</div>
-    <h1>Barcelona <span class="heart">❤️</span></h1>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="hero-kicker" id="hero-kicker"></div>
+        <h1 id="hero-title"></h1>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="trip-selector" class="chip" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:white; font-size:13px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:999px; font-family:inherit; -webkit-appearance:none; appearance:none;"></select>
+        <button id="new-trip-btn" class="chip" style="cursor:pointer; border:1px dashed rgba(255,255,255,0.4); background:transparent; color:white; font-size:13px; font-weight:500; font-family:inherit;">+ Ný ferð</button>
+      </div>
+    </div>
     <div class="hero-meta">
       <span class="chip" id="countdown">…</span>
-      <span class="chip accent">🌞 ~23°C · sól</span>
       <span class="chip" id="sync-badge" style="opacity: 0.7;">☁️ tengist...</span>
     </div>
   </div>
@@ -2036,9 +2043,27 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'barcelona2026';
-const TRIP_START = new Date(2026, 4, 21);
-const TRIP_END = new Date(2026, 4, 28);
+/* ---------- Multi-trip ---------- */
+const TRIPS_STORAGE = 'planner_trips';
+let TRIPS_LIST = JSON.parse(localStorage.getItem(TRIPS_STORAGE) || '[]');
+if (!TRIPS_LIST.length) {
+  TRIPS_LIST = [{
+    id: 'barcelona-2026',
+    name: 'Barcelona ❤️',
+    start: '2026-05-21',
+    end: '2026-05-28',
+    pw: '986923'  // hash of 'miabesta'
+  }];
+  localStorage.setItem(TRIPS_STORAGE, JSON.stringify(TRIPS_LIST));
+}
+const TRIP_PARAM = new URLSearchParams(window.location.search).get('trip');
+const TRIP_ID = TRIP_PARAM || localStorage.getItem('planner_activeTrip') || TRIPS_LIST[0].id;
+const TRIP_CONFIG = TRIPS_LIST.find(t => t.id === TRIP_ID) || TRIPS_LIST[0];
+localStorage.setItem('planner_activeTrip', TRIP_CONFIG.id);
+
+const STORAGE_KEY = 'trip_' + TRIP_CONFIG.id;
+const TRIP_START = new Date(TRIP_CONFIG.start);
+const TRIP_END = new Date(TRIP_CONFIG.end);
 
 /* ---------- Share mode ---------- */
 const SHARE_MAP = {
@@ -2053,7 +2078,7 @@ const SHARE_MODE = SHARE_MAP[SHARE_KEY] || null;
 /* ---------- Auth gate ---------- */
 // Simple client-side password. Share links (#deila-*) bypass the lock.
 // The hash is compared, not the raw password, so it's not in plain text in source.
-const PW_HASH = '986923'; // hash of 'miabesta'
+const PW_HASH = TRIP_CONFIG.pw || '986923';
 function simpleHash(str) {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -2112,11 +2137,34 @@ try {
     apiKey: "AIzaSyB6w4njSrBy3-Cl-T9wDe1MT2yJXqU3LNk",
     databaseURL: "https://barcelona-2026-d29a7-default-rtdb.europe-west1.firebasedatabase.app"
   });
-  fbRef = firebase.database().ref('trip');
+  fbRef = firebase.database().ref('trips/' + TRIP_CONFIG.id);
   _fbReady = true;
 } catch(e) {
   console.warn('Firebase init failed, running offline', e);
 }
+
+// One-time migration: move old /trip data to /trips/barcelona-2026
+async function migrateFirebasePath() {
+  if (!_fbReady || TRIP_CONFIG.id !== 'barcelona-2026') return;
+  try {
+    const newSnap = await firebase.database().ref('trips/barcelona-2026').once('value');
+    if (newSnap.exists()) return; // already migrated
+    const oldSnap = await firebase.database().ref('trip').once('value');
+    if (!oldSnap.exists()) return; // nothing to migrate
+    await firebase.database().ref('trips/barcelona-2026').set(oldSnap.val());
+    console.log('Migrated /trip → /trips/barcelona-2026');
+  } catch(e) { console.warn('Firebase path migration failed', e); }
+}
+
+// Also migrate old localStorage key
+(function migrateLocalStorage() {
+  const oldData = localStorage.getItem('barcelona2026');
+  const newData = localStorage.getItem(STORAGE_KEY);
+  if (oldData && !newData) {
+    localStorage.setItem(STORAGE_KEY, oldData);
+    console.log('Migrated localStorage barcelona2026 → ' + STORAGE_KEY);
+  }
+})();
 
 function setSyncBadge(text, ok) {
   const el = document.getElementById('sync-badge');
@@ -4240,6 +4288,70 @@ function initAll() {
   });
 }
 
+/* ---------- Trip selector + new trip ---------- */
+function renderHero() {
+  const startStr = TRIP_START.toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' });
+  const endStr = TRIP_END.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' });
+  document.getElementById('hero-kicker').textContent = `${endStr} til ${startStr}`;
+  document.getElementById('hero-title').innerHTML = escapeHtml(TRIP_CONFIG.name);
+}
+
+function renderTripSelector() {
+  const sel = document.getElementById('trip-selector');
+  if (!sel) return;
+  sel.innerHTML = TRIPS_LIST.map(t =>
+    `<option value="${escapeAttr(t.id)}" ${t.id === TRIP_CONFIG.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`
+  ).join('');
+  sel.addEventListener('change', () => {
+    const newId = sel.value;
+    localStorage.setItem('planner_activeTrip', newId);
+    const url = new URL(window.location.href);
+    url.searchParams.set('trip', newId);
+    url.hash = '';
+    window.location.href = url.toString();
+  });
+}
+
+document.getElementById('new-trip-btn').addEventListener('click', () => {
+  const name = prompt('Nafn ferðar (t.d. "Ítalía 2026"):');
+  if (!name || !name.trim()) return;
+  const start = prompt('Upphafsdagur (YYYY-MM-DD):');
+  if (!start || !/^\d{4}-\d{2}-\d{2}$/.test(start)) { alert('Ógilt dagsetningarsnið. Notaðu YYYY-MM-DD.'); return; }
+  const end = prompt('Lokadagur (YYYY-MM-DD):');
+  if (!end || !/^\d{4}-\d{2}-\d{2}$/.test(end)) { alert('Ógilt dagsetningarsnið. Notaðu YYYY-MM-DD.'); return; }
+  const pw = prompt('Lykilorð (má vera tómt):') || '';
+  const id = name.trim().toLowerCase().replace(/[^a-záéíóúýþæöð0-9]+/g, '-').replace(/-+$/, '') + '-' + start.slice(0,4);
+  const trip = { id, name: name.trim(), start, end, pw: pw ? simpleHash(pw) : '' };
+  TRIPS_LIST.push(trip);
+  localStorage.setItem(TRIPS_STORAGE, JSON.stringify(TRIPS_LIST));
+  // Also save trips list to Firebase for sync
+  if (_fbReady) firebase.database().ref('meta/trips').set(TRIPS_LIST);
+  localStorage.setItem('planner_activeTrip', id);
+  const url = new URL(window.location.href);
+  url.searchParams.set('trip', id);
+  url.hash = '';
+  window.location.href = url.toString();
+});
+
+// Sync trips list from Firebase (in case other device added a trip)
+async function syncTripsList() {
+  if (!_fbReady) return;
+  try {
+    const snap = await firebase.database().ref('meta/trips').once('value');
+    if (snap.exists()) {
+      const remote = snap.val();
+      if (Array.isArray(remote) && remote.length >= TRIPS_LIST.length) {
+        TRIPS_LIST = remote;
+        localStorage.setItem(TRIPS_STORAGE, JSON.stringify(TRIPS_LIST));
+        renderTripSelector();
+      }
+    } else {
+      // Push our list if Firebase has none
+      await firebase.database().ref('meta/trips').set(TRIPS_LIST);
+    }
+  } catch(e) { console.warn('Trips list sync failed', e); }
+}
+
 /* ---------- Share mode UI ---------- */
 function applyShareMode() {
   if (!SHARE_MODE) return;
@@ -4265,7 +4377,7 @@ document.querySelectorAll('[data-share]').forEach(btn => {
   btn.addEventListener('click', () => {
     const key = btn.dataset.share;
     const base = window.location.origin + window.location.pathname;
-    const url = base + '#' + key;
+    const url = base + '?trip=' + encodeURIComponent(TRIP_CONFIG.id) + '#' + key;
     navigator.clipboard.writeText(url).then(() => {
       toast('Hlekkur afritaður ✓');
       btn.textContent = '✓ Afritað!';
@@ -4280,12 +4392,18 @@ updateCountdown();
 setInterval(updateCountdown, 60000);
 
 function boot() {
+  document.title = TRIP_CONFIG.name + ' · Ferðaplani';
+  renderHero();
+  renderTripSelector();
   initAll();
   if (SHARE_MODE) {
     applyShareMode();
     setTimeout(startSyncListener, 2000);
   } else {
-    setTimeout(startSyncListener, 4000);
+    migrateFirebasePath().then(() => {
+      syncTripsList();
+      setTimeout(startSyncListener, 4000);
+    });
   }
 }
 
