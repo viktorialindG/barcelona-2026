@@ -2469,16 +2469,29 @@ function migrate(data) {
 
 function defaultTodos() {
   const mk = (text) => ({ id: 't' + Math.random().toString(36).slice(2, 10), text, done: false, due: '', created: Date.now() });
+  if (TRIP_CONFIG.id === 'barcelona-2026') {
+    return [
+      mk('Bóka einkabifreið frá BCN flugvelli til Salou (21.05)'),
+      mk('Bóka lest 26.05 Salou-Port Aventura → Tarragona → Passeig de Gràcia'),
+      mk('Staðfesta barnapössun með ömmum/öfum og nágrönnum'),
+      mk('Athuga gildistíma vegabréfa (þurfa að vera gild í 6+ mánuði)'),
+      mk('Kaupa ferðatryggingu'),
+      mk('Taka út evrur og athuga að kreditkort virki erlendis'),
+      mk('Hlaða niður TMB app (metró í Barcelona)'),
+      mk('Hlaða niður Google Maps offline fyrir Barcelona + Salou'),
+      mk('Athuga roaming / data plan hjá símafyrirtækinu'),
+      mk('Pakka ferðatösku')
+    ];
+  }
+  // Generic todos for any new trip
   return [
-    mk('Bóka einkabifreið frá BCN flugvelli til Salou (21.05)'),
-    mk('Bóka lest 26.05 Salou-Port Aventura → Tarragona → Passeig de Gràcia'),
-    mk('Staðfesta barnapössun með ömmum/öfum og nágrönnum'),
-    mk('Athuga gildistíma vegabréfa (þurfa að vera gild í 6+ mánuði)'),
+    mk('Athuga gildistíma vegabréfa'),
     mk('Kaupa ferðatryggingu'),
-    mk('Taka út evrur og athuga að kreditkort virki erlendis'),
-    mk('Hlaða niður TMB app (metró í Barcelona)'),
-    mk('Hlaða niður Google Maps offline fyrir Barcelona + Salou'),
-    mk('Athuga roaming / data plan hjá símafyrirtækinu'),
+    mk('Athuga gjaldeyri og kreditkort'),
+    mk('Athuga roaming / data plan'),
+    mk('Bóka flug'),
+    mk('Bóka hótel'),
+    mk('Staðfesta pössun (Sóley + Mía)'),
     mk('Pakka ferðatösku')
   ];
 }
