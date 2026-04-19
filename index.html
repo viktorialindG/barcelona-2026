@@ -1819,7 +1819,7 @@
 
     <div class="weather-card" id="weather-card">
       <div class="weather-head">
-        <h3 style="margin:0;">🌤️ Veður · Barcelona / Salou</h3>
+        <h3 style="margin:0;" id="weather-title">🌤️ Veður</h3>
         <span class="weather-sub" id="weather-status">…</span>
       </div>
       <div id="weather-body"></div>
@@ -2370,7 +2370,9 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       const fresh = structuredClone(DEFAULT_DATA);
-      return applyFirstTimeTemplate(fresh);
+      // Only apply Barcelona template for that specific trip
+      if (TRIP_CONFIG.id === 'barcelona-2026') return applyFirstTimeTemplate(fresh);
+      return fresh;
     }
     const parsed = JSON.parse(raw);
     const merged = { ...structuredClone(DEFAULT_DATA), ...parsed };
@@ -2392,7 +2394,9 @@ function load() {
     }
     return migrate(merged);
   } catch(e) {
-    return applyFirstTimeTemplate(structuredClone(DEFAULT_DATA));
+    const fresh = structuredClone(DEFAULT_DATA);
+    if (TRIP_CONFIG.id === 'barcelona-2026') return applyFirstTimeTemplate(fresh);
+    return fresh;
   }
 }
 
@@ -2424,7 +2428,7 @@ function migrate(data) {
     // If the user has effectively no trip data yet, apply the itinerary template
     const hasSchedule = Object.values(data.schedule || {}).some(arr => Array.isArray(arr) && arr.length);
     const hasFlights = data.fields && (data.fields.flight_out_num || data.fields.flight_in_num);
-    if (data.hotels.length === 0 && !hasSchedule && !hasFlights) {
+    if (TRIP_CONFIG.id === 'barcelona-2026' && data.hotels.length === 0 && !hasSchedule && !hasFlights) {
       return applyFirstTimeTemplate(data);
     }
   }
@@ -2631,7 +2635,12 @@ async function searchPlaces(query) {
     // Worldwide search. Viewbox covers Catalonia (Barcelona + Salou) to bias
     // ranking toward the travel region without restricting results.
     const q = encodeURIComponent(query);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=6&addressdetails=1&viewbox=0.8,41.6,2.4,40.9`;
+    // Dynamic viewbox from first hotel (bias search to trip region) or no bias
+    const firstHotel = (DATA.hotels || []).find(h => h.coords && h.coords.lat);
+    const vb = firstHotel
+      ? `&viewbox=${(firstHotel.coords.lng-0.5).toFixed(2)},${(firstHotel.coords.lat+0.3).toFixed(2)},${(firstHotel.coords.lng+0.5).toFixed(2)},${(firstHotel.coords.lat-0.3).toFixed(2)}`
+      : '';
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=6&addressdetails=1${vb}`;
     const res = await fetch(url);
     if (!res.ok) return [];
     const data = await res.json();
@@ -4206,21 +4215,42 @@ function climatologyHTML() {
 async function renderWeather() {
   const body = document.getElementById('weather-body');
   const status = document.getElementById('weather-status');
+  const titleEl = document.getElementById('weather-title');
   if (!body) return;
 
-  // Always show climatology first
-  body.innerHTML = climatologyHTML();
-  if (status) status.textContent = 'Sögulegt meðaltal · maí';
+  // Find location from hotels (use first hotel with coords, or trip name)
+  const hotels = DATA.hotels || [];
+  const hotelWithCoords = hotels.find(h => h.coords && h.coords.lat);
+  let lat = hotelWithCoords ? hotelWithCoords.coords.lat : null;
+  let lng = hotelWithCoords ? hotelWithCoords.coords.lng : null;
+  const locationName = hotels.length ? hotels[0].name || TRIP_CONFIG.name : TRIP_CONFIG.name;
+
+  if (titleEl) titleEl.textContent = '🌤️ Veður · ' + locationName;
+
+  if (!lat || !lng) {
+    body.innerHTML = `<div class="empty-hint">Bættu við hóteli með heimilisfangi til að sjá veðurspá.</div>`;
+    if (status) status.textContent = '';
+    return;
+  }
+
+  // Show generic "loading" first
+  body.innerHTML = `<div class="empty-hint">Sæki veðurgögn...</div>`;
 
   // Try live forecast if we're within the 16-day window
   const now = new Date();
   const daysTo = Math.ceil((TRIP_START - now) / (1000*60*60*24));
-  if (daysTo > 16) return;
+
+  if (daysTo > 16) {
+    body.innerHTML = `<div class="empty-hint">Veðurspá birtist þegar ferðin er innan 16 daga (${daysTo} dagar eftir).</div>`;
+    if (status) status.textContent = 'Bíður spár';
+    return;
+  }
+
+  const startISO = TRIP_CONFIG.start;
+  const endISO = TRIP_CONFIG.end;
 
   try {
-    // Average Barcelona/Salou: Barcelona 41.38/2.17, Salou 41.07/1.13 — use midpoint
-    const lat = 41.22, lng = 1.65;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&start_date=2026-05-21&end_date=2026-05-28`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&start_date=${startISO}&end_date=${endISO}`;
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
@@ -4248,15 +4278,12 @@ async function renderWeather() {
     }).join('');
 
     body.innerHTML = `
-      ${climatologyHTML()}
-      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.6);">
-        <div style="font-size: 10px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 700; margin-bottom: 10px; opacity: 0.75;">Spá fyrir ferðadagana</div>
-        <div class="weather-forecast">${forecastHTML}</div>
-      </div>
+      <div class="weather-forecast">${forecastHTML}</div>
     `;
     if (status) status.textContent = 'Spá · open-meteo';
   } catch(e) {
     console.warn('Weather forecast fetch failed', e);
+    body.innerHTML = `<div class="empty-hint">Gat ekki sótt veður. Reyndu aftur seinna.</div>`;
   }
 }
 
