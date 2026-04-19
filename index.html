@@ -4343,16 +4343,14 @@ function renderTripSelector() {
 // Delete trip button (in trip selector area)
 function deleteCurrentTrip() {
   if (TRIPS_LIST.length <= 1) { alert('Þú getur ekki eytt síðustu ferðinni.'); return; }
-  if (!confirm(`Eyða "${TRIP_CONFIG.name}" og öllum gögnum hennar?`)) return;
-  // Remove from list
+  if (!confirm(`Fjarlægja "${TRIP_CONFIG.name}" úr valmyndinni?\n\nGögn eru varðveitt í skýinu og hægt að endurheimta.`)) return;
+  // Remove from trips list (UI only)
   const idx = TRIPS_LIST.findIndex(t => t.id === TRIP_CONFIG.id);
   if (idx >= 0) TRIPS_LIST.splice(idx, 1);
   localStorage.setItem(TRIPS_STORAGE, JSON.stringify(TRIPS_LIST));
-  // Remove trip data from localStorage
   localStorage.removeItem(STORAGE_KEY);
-  // Remove from Firebase
+  // Update trips list in Firebase — but DO NOT delete trip data
   if (_fbReady) {
-    firebase.database().ref('trips/' + TRIP_CONFIG.id).remove();
     firebase.database().ref('meta/trips').set(TRIPS_LIST);
   }
   // Switch to first remaining trip
