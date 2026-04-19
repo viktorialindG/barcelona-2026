@@ -1789,6 +1789,7 @@
       <div style="display:flex; gap:8px; align-items:center;">
         <select id="trip-selector" class="chip" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:white; font-size:13px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:999px; font-family:inherit; -webkit-appearance:none; appearance:none;"></select>
         <button id="new-trip-btn" class="chip" style="cursor:pointer; border:1px dashed rgba(255,255,255,0.4); background:transparent; color:white; font-size:13px; font-weight:500; font-family:inherit;">+ Ný ferð</button>
+        <button id="delete-trip-btn" class="chip" style="cursor:pointer; border:1px solid rgba(255,100,100,0.4); background:rgba(255,100,100,0.15); color:#ffb0b0; font-size:13px; font-weight:500; font-family:inherit;" title="Eyða þessari ferð">🗑️</button>
       </div>
     </div>
     <div class="hero-meta">
@@ -4338,6 +4339,32 @@ function renderTripSelector() {
     window.location.href = url.toString();
   });
 }
+
+// Delete trip button (in trip selector area)
+function deleteCurrentTrip() {
+  if (TRIPS_LIST.length <= 1) { alert('Þú getur ekki eytt síðustu ferðinni.'); return; }
+  if (!confirm(`Eyða "${TRIP_CONFIG.name}" og öllum gögnum hennar?`)) return;
+  // Remove from list
+  const idx = TRIPS_LIST.findIndex(t => t.id === TRIP_CONFIG.id);
+  if (idx >= 0) TRIPS_LIST.splice(idx, 1);
+  localStorage.setItem(TRIPS_STORAGE, JSON.stringify(TRIPS_LIST));
+  // Remove trip data from localStorage
+  localStorage.removeItem(STORAGE_KEY);
+  // Remove from Firebase
+  if (_fbReady) {
+    firebase.database().ref('trips/' + TRIP_CONFIG.id).remove();
+    firebase.database().ref('meta/trips').set(TRIPS_LIST);
+  }
+  // Switch to first remaining trip
+  const next = TRIPS_LIST[0];
+  localStorage.setItem('planner_activeTrip', next.id);
+  const url = new URL(window.location.href);
+  url.searchParams.set('trip', next.id);
+  url.hash = '';
+  window.location.href = url.toString();
+}
+
+document.getElementById('delete-trip-btn').addEventListener('click', deleteCurrentTrip);
 
 document.getElementById('new-trip-btn').addEventListener('click', () => {
   const name = prompt('Nafn ferðar (t.d. "Ítalía 2026"):');
