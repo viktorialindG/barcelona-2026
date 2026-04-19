@@ -4318,9 +4318,9 @@ function initAll() {
 
 /* ---------- Trip selector + new trip ---------- */
 function renderHero() {
-  const startStr = TRIP_START.toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' });
-  const endStr = TRIP_END.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' });
-  document.getElementById('hero-kicker').textContent = `${endStr} til ${startStr}`;
+  const startStr = TRIP_START.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' });
+  const endStr = TRIP_END.toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('hero-kicker').textContent = `${startStr} til ${endStr}`;
   document.getElementById('hero-title').innerHTML = escapeHtml(TRIP_CONFIG.name);
 }
 
