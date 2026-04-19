@@ -1583,6 +1583,78 @@
     font-style: italic;
   }
 
+  /* LOGIN SCREEN */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .login-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+  }
+  .login-card h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 28px;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .login-card .login-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .login-card input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    font-size: 15px;
+    text-align: center;
+    font-family: inherit;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color 0.2s;
+  }
+  .login-card input[type="password"]:focus {
+    outline: none;
+    border-color: var(--sunset);
+  }
+  .login-card .login-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--sunset);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .login-card .login-btn:hover { background: var(--sunset-dark); }
+  .login-error {
+    color: #b74434;
+    font-size: 13px;
+    margin-top: 10px;
+    display: none;
+  }
+
   /* SHARE MODE */
   .share-banner {
     background: var(--night);
@@ -1696,6 +1768,16 @@
 </style>
 </head>
 <body>
+
+<div class="login-overlay" id="login-overlay" style="display:none;">
+  <div class="login-card">
+    <h2>Barcelona ❤️</h2>
+    <div class="login-sub">Sláðu inn lykilorð til að opna</div>
+    <input type="password" id="login-pw" placeholder="Lykilorð" autofocus>
+    <button class="login-btn" id="login-btn">Opna</button>
+    <div class="login-error" id="login-error">Rangt lykilorð</div>
+  </div>
+</div>
 
 <header class="hero">
   <div class="hero-inner">
@@ -1967,6 +2049,58 @@ const SHARE_MAP = {
 };
 const SHARE_KEY = window.location.hash.replace('#', '');
 const SHARE_MODE = SHARE_MAP[SHARE_KEY] || null;
+
+/* ---------- Auth gate ---------- */
+// Simple client-side password. Share links (#deila-*) bypass the lock.
+// The hash is compared, not the raw password, so it's not in plain text in source.
+const PW_HASH = '986923'; // hash of 'miabesta'
+function simpleHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return (h >>> 0).toString(16).slice(0, 6);
+}
+
+function checkAuth() {
+  // Share mode: no password needed
+  if (SHARE_MODE) return true;
+  // Check sessionStorage (survives refresh but not tab close)
+  if (sessionStorage.getItem('bcn26_auth') === 'ok') return true;
+  return false;
+}
+
+function showLogin(onSuccess) {
+  const overlay = document.getElementById('login-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.querySelector('header.hero').style.display = 'none';
+  document.querySelector('nav.tabs').style.display = 'none';
+  document.querySelector('main').style.display = 'none';
+
+  const pwInput = document.getElementById('login-pw');
+  const loginBtn = document.getElementById('login-btn');
+  const errorEl = document.getElementById('login-error');
+
+  const tryLogin = () => {
+    if (simpleHash(pwInput.value) === PW_HASH) {
+      sessionStorage.setItem('bcn26_auth', 'ok');
+      overlay.style.display = 'none';
+      document.querySelector('header.hero').style.display = '';
+      document.querySelector('nav.tabs').style.display = '';
+      document.querySelector('main').style.display = '';
+      if (onSuccess) onSuccess();
+    } else {
+      errorEl.style.display = 'block';
+      pwInput.value = '';
+      pwInput.focus();
+      setTimeout(() => { errorEl.style.display = 'none'; }, 2000);
+    }
+  };
+  loginBtn.addEventListener('click', tryLogin);
+  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+  pwInput.focus();
+}
 
 /* ---------- Firebase Realtime Sync ---------- */
 const DEVICE_ID = 'dev_' + Math.random().toString(36).slice(2, 10);
@@ -4144,15 +4278,22 @@ document.querySelectorAll('[data-share]').forEach(btn => {
 
 updateCountdown();
 setInterval(updateCountdown, 60000);
-initAll();
 
-if (SHARE_MODE) {
-  // Share mode: show only the target tab, start sync immediately
-  applyShareMode();
-  setTimeout(startSyncListener, 2000);
+function boot() {
+  initAll();
+  if (SHARE_MODE) {
+    applyShareMode();
+    setTimeout(startSyncListener, 2000);
+  } else {
+    setTimeout(startSyncListener, 4000);
+  }
+}
+
+// Auth gate
+if (!checkAuth()) {
+  showLogin(boot);
 } else {
-  // Normal mode: delay sync to avoid startup echo
-  setTimeout(startSyncListener, 4000);
+  boot();
 }
 </script>
 
